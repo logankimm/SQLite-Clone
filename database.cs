@@ -18,6 +18,30 @@ public interface IChampDatabase
     IEnumerable<ChampModel> FindBy(string name, int cost);
 }
 
+// Implementation of block storage (don't go from a stream - store in individual array boxes)
+public interface IBlockStorage
+{
+    int BlockContentSize { get; }
+    int BlockHeaderSize { get; }
+    int BlockSize { get; }
+    IBlock Find(uint blockId);
+    IBlock CreateNew();
+}
+
+public interface IBlock : IDisposable
+{
+    // Unsigned integer (only stores positives not negatives) that is unique
+    uint Id { get; }
+    long GetHeader(int field);
+    void SetHeader(int field, long newHeader);
+    void Read(byte[] dst, int dstOffSet, int srcOffSet, int count);
+
+    /// <summary>
+    /// Write content of given buffer (src) into this (dst)
+    /// </summary>
+    void Write(byte[] src, int srcOffset, int dstOffset, int count);
+}
+
 // Creating input command line interface (REPL)
 int main(int argc, char* argv[])
 {
