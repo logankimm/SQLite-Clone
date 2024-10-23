@@ -1,4 +1,5 @@
 using System;
+
 namespace DatabaseCore;
 
 public interface IBlock : IDisposable
