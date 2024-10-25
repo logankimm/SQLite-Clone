@@ -34,3 +34,10 @@ class Dog
 - Uses MoveNext() to iterate through collection of objects
 #### Difference Summary
 - IEnumerator keeps track internally of current position of iterator while IEnumerable just loops through from start to finish
+
+
+## Buffers
+### Definition
+- Allows for manipulation of primitive arrays
+### BlockCopy
+- BlockCopy(src buffer, index/offset to start reading buffer information, destination array, offset for destination, # of bytes to copy to destination array)

@@ -15,43 +15,53 @@ public class BlockStorage : IBlockStorage
     readonly Dictionary<uint, Block> blocks = new Dictionary<uint, Block>();
 
     // Not sure what the purpose of this property is?
-    public int DiskSectorSize {
-        get {
+    public int DiskSectorSize
+    {
+        get
+        {
             return unitOfWork;
         }
     }
 
-    public int BlockSize {
-        get {
+    public int BlockSize
+    {
+        get
+        {
             return unitOfWork;
         }
     }
 
-    public int BlockHeaderSize {
-        get {
+    public int BlockHeaderSize
+    {
+        get
+        {
             return blockHeaderSize;
         }
     }
 
-    public int blockContentSize {
-        get {
+    public int blockContentSize
+    {
+        get
+        {
             return blockContentSize;
         }
     }
     public BlockStorage(Stream storage, int blockSize = 4096, int blockHeaderSize = 48)
     {
-        
-        if (storage == null)
-            throw new ArgumentNullException ("no storage attached");
 
-        if (blockHeaderSize >= blockSize) {
-            throw new ArgumentException ("blockHeaderSize cannot be " +
+        if (storage == null)
+            throw new ArgumentNullException("no storage attached");
+
+        if (blockHeaderSize >= blockSize)
+        {
+            throw new ArgumentException("blockHeaderSize cannot be " +
                 "larger than or equal " +
                 "to " + "blockSize");
         }
 
-        if (blockSize < 128) {
-            throw new ArgumentException ("blockSize too small");
+        if (blockSize < 128)
+        {
+            throw new ArgumentException("blockSize too small");
         }
 
         this.unitOfWork = ((blockSize >= 4096) ? 4096 : 128)
@@ -60,7 +70,7 @@ public class BlockStorage : IBlockStorage
         this.blockContentSize = blockSize - blockHeaderSize;
         this.stream = storage;
     }
-    
+
     public IBlock Find(uint blockId)
     {
         // Check from already created blocks within memo (blocks)
@@ -68,7 +78,7 @@ public class BlockStorage : IBlockStorage
         {
             return blocks[blockId];
         }
-        
+
         // This part should never be triggered ever then?
         // Otherwise look inside the stream to find where the block fits into place
         var blockPosition = blockId * blockSize;
