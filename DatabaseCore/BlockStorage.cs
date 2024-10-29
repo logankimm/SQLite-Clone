@@ -93,7 +93,7 @@ public class BlockStorage : IBlockStorage
         stream.Position = blockId * blockSize;
         stream.Read(firstSector, 0, DiskSectorSize);
 
-        // construct new block - wouldn't the type always be IBlock and not var???
+        // construct new block
         var block = new Block(this, blockId, firstSector, this.stream);
         OnBlockInitialized(block); //??????
         return block;

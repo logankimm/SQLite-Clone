@@ -24,6 +24,9 @@ public class Block : IBlock
         }
     }
 
+    // Blockstorage - original container for the blocks I assume
+    // id - unique id to be referenced while creating the block
+    // first sector - byte array containing the header metadata data?
     public Block(BlockStorage storage, uint id, byte[] firstSector, Stream stream)
     {
         // Error handling for bad inputs
@@ -48,17 +51,42 @@ public class Block : IBlock
         {
             throw new ObjectDisposedException("Block");
         }
+        // Validate field number
+        if (field < 0)
+        {
+            throw new IndexOutOfRangeException();
+        }
+        if (field >= (storage.BlockHeaderSize / 8))
+        {
+            throw new ArgumentException("Invalid field: " + field);
+        }
 
-
+        // Check if stored in cached already else return the long
+        if (field < cachedHeaderValue.Length)
+        {
+            if (cachedHeaderValue[field] == null)
+            {
+                cachedHeaderValue[field] = BufferHelper.ReadBufferInt64(firstSector, field * 8);
+            }
+            return (long)cachedHeaderValue[field];
+        }
+        else
+        {
+            return BufferHelper.ReadBufferInt64(firstSector, field * 8)
+        }
     }
 
+    // I imagine field is the index at which the length of the header starts and its a constant length
     public void SetHeader(int field, long value)
     {
         if (isDisposed)
         {
             throw new ObjectDisposedException("Block");
         }
-
+        if (field < 0)
+        {
+            throw new IndexOutOfRangeException();
+        }
         // Update cache if this field is cached
         if (field < cachedHeaderValue.Length)
         {
@@ -71,9 +99,25 @@ public class Block : IBlock
         isFirstSectorDirty = true;
 
     }
-    public void Read()
+    public void Read(byte[] dest, int destOffSet, int srcOffSet, int count)
     {
+        if (isDisposed)
+        {
+            throw new ObjectDisposedException("Block");
+        }
 
+        // Make sure the count is in bounds of the block content size and is valid
+        if ((count <= 0) || ((count + srcOffSet) >= storage.blockContentSize))
+        {
+            throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
+        }
+        if ((count + destOffset) >= dest.Length)
+        {
+            throw new ArgumentOutOfRangeException("Requested count is outside of dest bounds: Count=" + count);
+        }
+
+        var dataCopied = 0;
+        var copyFromFirstSector = 
     }
 
     public void Dispose()

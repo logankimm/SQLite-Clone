@@ -24,6 +24,13 @@ public static class BufferHelper
         return LittleEndianByteOrder.GetInt32(intBuffer);
     }
 
+    public static long ReadBufferInt64(byte[] buffer, int bufferOffset)
+    {
+        var longBuffer = new byte[8];
+        Buffer.BlockCopy(buffer, bufferOffset, longBuffer, 0, 8);
+        return LittleEndianByteOrder.GetInt64(longBuffer);
+    }
+
     public static void WriteBuffer(long value, byte[] buffer, int bufferOffset)
     {
         Buffer.BlockCopy(LittleEndianByteOrder.GetBytes(value), 0, buffer, bufferOffset, 8);
