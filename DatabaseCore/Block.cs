@@ -79,10 +79,8 @@ public class Block : IBlock
     // I imagine field is the index at which the length of the header starts and its a constant length
     public void SetHeader(int field, long value)
     {
-        if (isDisposed)
-        {
-            throw new ObjectDisposedException("Block");
-        }
+        checkDisposed();
+
         if (field < 0)
         {
             throw new IndexOutOfRangeException();
@@ -101,11 +99,7 @@ public class Block : IBlock
     }
     public void Read(byte[] dest, int destOffSet, int srcOffSet, int count)
     {
-        if (isDisposed)
-        {
-            throw new ObjectDisposedException("Block");
-        }
-
+        checkDisposed();
         // Make sure the count is in bounds of the block content size and is valid
         if ((count <= 0) || ((count + srcOffSet) >= storage.blockContentSize))
         {
@@ -117,7 +111,15 @@ public class Block : IBlock
         }
 
         var dataCopied = 0;
-        var copyFromFirstSector = 
+        var copyFromFirstSector =
+    }
+
+    private void checkDisposed()
+    {
+        if (isDisposed)
+        {
+            throw new ObjectDisposedException("Block");
+        }
     }
 
     public void Dispose()

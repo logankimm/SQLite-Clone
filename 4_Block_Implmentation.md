@@ -16,4 +16,4 @@
 1. firstSector - byte[] of size DiskSectorSize
 ## Individual Blocks
 - Size of blocks (must be of multiple 4KB as OS writes/reads data in 4KB chunks)
-- 
+- While OS's read in 4KB, they some have sub-page writes (256/512B) for smaller data. Additionally 256 is 2^8, which allows for bitwise operations, and thus more efficient operations
