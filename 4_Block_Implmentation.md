@@ -1,5 +1,6 @@
 ## Additionally/misc data
 - Data is not seen as a stream but split int sizeable chunks known as blocks that can be reused after deletion
+- Matching 1:1 for instance of BlockStorage to data stream
 ## Block storage
 - One individual file that should hold the blocks?
 ### Class/Interface Attributes
@@ -9,11 +10,50 @@
 2. stream - what is this? - look at teh following data type of stream
     1. an example used in test - new MemoryStream
     2. an example - FileStream (allows for reading and writing of a file)
-3. What the fuck is stream - incoming stream of data to be processed I think? - please let me know because I'm so fucking confused this doesn't make any fucking sense - yes it is
+    3. What is stream - incoming stream of data to be processed I think? - nope, it's the physical storage backend for data
+
 
 ### Functions
 - Find
-1. firstSector - byte[] of size DiskSectorSize
-## Individual Blocks
+    What function handles reassigning blockIds for deleted variables
+    1. firstSector - byte (values of 0 - 255) array of length DiskSectorSize e.g. [0, 1, 255, 254, 2, 0...]
+- CreateNew()
+    1. blockId is stored as uint (0 - 4mil and can't be negative) and is the next available id
+        a. if stream length = 0, then no data is written, so write at 0
+        b. if stream length = 4096, then 1 piece of data is written (id 0), so write at id 1
+    2. Extending stream length
+        a. the function is setLength NOT addLength - this.stream.Length + blockSize is an inefficient implementation since it doesn't factor deleted blocks
+        b. Flush() - writes new data to disk immediately and executes changes before moving forward
+
+
+#### Protected Methods
+Protected methods can be accessed through subclasses. Code is separated from the Constructor because Block doesn't have access to key variables (e.g. dictionary block) and shouldn't have access to disposed fields b/c it would need access to stored cache (dictionary blocks) and it would never delete itself b/c event handlers ()
+
+
+### Individual Blocks
 - Size of blocks (must be of multiple 4KB as OS writes/reads data in 4KB chunks)
-- While OS's read in 4KB, they some have sub-page writes (256/512B) for smaller data. Additionally 256 is 2^8, which allows for bitwise operations, and thus more efficient operations
+- While OS's read in 4KB, they some have sub-page writes (256/512B) for smaller data. Additionally 256 is 2^8, which allows for bit shifts, and thus more efficient operations
+
+
+### Implementations
+1. Creates private variable fields for the class using readonly. These can only be modified during the creation of an instance and not changed otherwise.
+ - readonly are fields (private variables which can't be accessed) vs something like public int BlockSize which is a public property (which can be accessed through code)
+
+### Examples
+```
+			var nodeManager = new TreeDiskNodeManager<int, long> (
+				new TreeIntSerializer(),
+				new TreeLongSerializer(),
+				new RecordStorage(
+					new BlockStorage(
+						stream, 
+						4096, 
+						48
+					)
+				)
+			); 
+
+
+			// Construct the RecordStorage that use to store main cow data
+			this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 4096, 48));
+```
