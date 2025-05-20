@@ -1,9 +1,9 @@
-## Additionally/misc data
+# Additionally/misc data
 - Data is not seen as a stream but split int sizeable chunks known as blocks that can be reused after deletion
 - Matching 1:1 for instance of BlockStorage to data stream
-## Block storage
+# Block storage
 - One individual file that should hold the blocks?
-### Class/Interface Attributes
+## Class/Interface Attributes
 1. blockSize - size of individual blocks within the file system
     1. blockContentSize - Size of content (overall size - header size data)
     2. unitOfWork - not sure what this does yet - testing formatting rn - Is the same thing as blockSize/DiskSectorSize - what's the reason for making 2 separate variable names (maybe has to do with how the os operates? when determining sizes)
@@ -57,3 +57,30 @@ Protected methods can be accessed through subclasses. Code is separated from the
 			// Construct the RecordStorage that use to store main cow data
 			this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 4096, 48));
 ```
+
+# Blocks
+
+## Class/Interface Attributes
+1. firstSector - data read from stream with length DiskSectorSize
+7. isDosposed - reference to whether or not its deleted? - there's an event handler - yes, safety precaution to make sure removed blocks cannot be accessed
+
+
+### Implementations
+1. Creates a new block in memory? - don't think it is hard written to the stream (yeah this is done through BlockStorage.CreateNew())
+
+
+### Functions
+1. GetHeader() - 
+    #### Implementation
+    - 
+
+
+#### Protected Methods
+
+
+
+### Individual Blocks
+- 
+
+
+### Examples

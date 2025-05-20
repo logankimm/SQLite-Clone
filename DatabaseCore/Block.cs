@@ -26,7 +26,6 @@ public class Block : IBlock
 
     // Blockstorage - original container for the blocks I assume
     // id - unique id to be referenced while creating the block
-    // first sector - byte array containing the header metadata data?
     public Block(BlockStorage storage, uint id, byte[] firstSector, Stream stream)
     {
         // Error handling for bad inputs
