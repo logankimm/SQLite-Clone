@@ -60,7 +60,8 @@ public class Block : IBlock
             throw new ArgumentException("Invalid field: " + field);
         }
 
-        // Check if stored in cached already else return the long
+        // Check if stored in cached already else return the long - cache in on a first-come first serve basis?
+        // Caches are unique to each block instance and not shared - which means everything is always cached probably
         if (field < cachedHeaderValue.Length)
         {
             if (cachedHeaderValue[field] == null)
@@ -90,11 +91,9 @@ public class Block : IBlock
             cachedHeaderValue[field] = value;
         }
 
-        // Write in cached buffer
-        // Why need to convert value into a long if it's already a long??????????????????????????
+        // firstSector is the location of the data within the stream, and field is multiplied by 8 since each field size is 8 bytes
         BufferHelper.WriteBuffer((long)value, firstSector, field * 8);
         isFirstSectorDirty = true;
-
     }
     public void Read(byte[] dest, int destOffSet, int srcOffSet, int count)
     {

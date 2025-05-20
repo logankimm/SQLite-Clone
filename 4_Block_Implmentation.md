@@ -41,28 +41,35 @@ Protected methods can be accessed through subclasses. Code is separated from the
 
 ### Examples
 ```
-			var nodeManager = new TreeDiskNodeManager<int, long> (
-				new TreeIntSerializer(),
-				new TreeLongSerializer(),
-				new RecordStorage(
-					new BlockStorage(
-						stream, 
-						4096, 
-						48
-					)
-				)
-			); 
+var nodeManager = new TreeDiskNodeManager<int, long> (
+    new TreeIntSerializer(),
+    new TreeLongSerializer(),
+    new RecordStorage(
+        new BlockStorage(
+            stream, 
+            4096, 
+            48
+        )
+    )
+); 
 
 
-			// Construct the RecordStorage that use to store main cow data
-			this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 4096, 48));
+// Construct the RecordStorage that use to store main cow data
+this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 4096, 48));
 ```
 
 # Blocks
 
 ## Class/Interface Attributes
-1. firstSector - data read from stream with length DiskSectorSize
-7. isDosposed - reference to whether or not its deleted? - there's an event handler - yes, safety precaution to make sure removed blocks cannot be accessed
+1. firstSector - data read from stream with length DiskSectorSize - the amount of data that's read/written per action - contains header data + more if for example:
+```
+    blockSize: 4096,  // 4KB blocks
+    blockHeaderSize: 48,
+    diskSectorSize: 512  // 512-byte sectors
+```
+7. isDisposed - reference to whether or not its deleted? - there's an event handler - yes, safety precaution to make sure removed blocks cannot be accessed
+
+Still confused on why field is 8 bytes?
 
 
 ### Implementations
@@ -71,8 +78,11 @@ Protected methods can be accessed through subclasses. Code is separated from the
 
 ### Functions
 1. GetHeader() - 
+    - BufferHelper.ReadBufferInt64 - custom class to help with reading/writing data in arrays. Reads the data in firstSector starting from the bufferOffset(field * 8) and returns the data after converting the byte[] -> long
     #### Implementation
-    - 
+```
+
+```
 
 
 #### Protected Methods
