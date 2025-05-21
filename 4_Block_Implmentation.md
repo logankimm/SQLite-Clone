@@ -80,6 +80,11 @@ Still confused on why field is 8 bytes?
 1. GetHeader() - 
     - BufferHelper.ReadBufferInt64 - custom class to help with reading/writing data in arrays. Reads the data in firstSector starting from the bufferOffset(field * 8) and returns the data after converting the byte[] -> long
     #### Implementation
+3. Read() - 
+    - Reads data from a stream and transfers it into a destination buffer
+
+    - copyableFromFirstSector - Comparison is < and not <= because e.g. HeaderSize = 10, srcOffSet = 2, DiskSectorSize = 12, the first read byte is outside of the firstSector
+    - numBytesToRead - In the form of a min because it's faster/efficient reading based off of DiskSectorSize
 ```
 
 ```

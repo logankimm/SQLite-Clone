@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace DatabaseCore;
 
@@ -55,7 +57,7 @@ public class Block : IBlock
         {
             throw new IndexOutOfRangeException();
         }
-        if (field >= (storage.BlockHeaderSize / 8))
+        if (field >= (this.storage.BlockHeaderSize / 8))
         {
             throw new ArgumentException("Invalid field: " + field);
         }
@@ -98,8 +100,8 @@ public class Block : IBlock
     public void Read(byte[] dest, int destOffSet, int srcOffSet, int count)
     {
         checkDisposed();
-        // Make sure the count is in bounds of the block content size and is valid
-        if ((count <= 0) || ((count + srcOffSet) >= storage.blockContentSize))
+        // Make sure the count is in bounds of the block content size and destination
+        if ((count <= 0) || ((count + srcOffSet) >= this.storage.blockContentSize))
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
@@ -108,8 +110,55 @@ public class Block : IBlock
             throw new ArgumentOutOfRangeException("Requested count is outside of dest bounds: Count=" + count);
         }
 
-        var dataCopied = 0;
-        var copyFromFirstSector =
+        // dataCopied = index of bytes that have been read?
+        var dataIndexRead = 0;
+
+        var bool copyableFromFirstSector = (this.storage.BlockHeaderSize + srcOffSet < this.storage.DiskSectorSize);
+        // Read available data from the cached memory first
+        if (copyableFromFirstSector)
+        {
+            // First part of the min is just making sure that its within boundaries of the firstSector
+            var numCacheBytesToRead = Math.min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - srcOffSet, count);
+            Buffer.BlockCopy(
+                src: this.firstSector,
+                srcOffSet: this.storage.BlockHeaderSize + srcOffSet,
+                dst: dest,
+                destOffSet: destOffSet,
+                count: numCacheBytesToRead
+            );
+
+            dataIndexRead += numCacheBytesToRead;
+        }
+
+        // Check if there's data to be copied still
+        if (dataIndexRead < count)
+        {
+            // then update the position within the stream to read the rest of the data depending on whether or not it copied from firstSector
+            if (copyableFromFirstSector)
+            {
+                this.stream.Position = (this.id * this.storage.BlockSize) + this.storage.DiskSectorSize;
+            }
+            else
+            {
+                this.stream.Position = (this.id * this.storage.BlockSize) + this.storage.BlockStorage + srcOffSet;
+            }
+        }
+
+        while (dataIndexRead < count)
+        {
+            var numBytesToRead = Math.min(this.storage.DiskSectorSize, count - dataIndexRead);
+            this.stream.Read(
+                dst: dest,
+                destOffSet: destOffSet + dataIndexRead,
+                count: numBytesToRead
+            );
+            // Error statement that only triggers if the stream index being read doesn't exist
+            if (thisRead == 0)
+            {
+                throw new EndOfStreamException();
+            }
+            dataIndexRead += numCacheBytesToRead;
+        }
     }
 
     private void checkDisposed()
