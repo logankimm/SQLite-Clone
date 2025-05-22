@@ -2,11 +2,6 @@ namespace DatabaseCore
 
 public interface IRecordStorage
 {
-    // An array of blocks included?
-    // an initial record for deletion
-    // Update a record's data
-    void Update(uint recordId, byte[] data);
-
     /// <summary>
     /// Grab a record's data
     /// </summary>
@@ -31,4 +26,9 @@ public interface IRecordStorage
     // Delete recordId and its data
     /// </summary>
     void Delete(uint recordId);
+
+    /// <summary>
+    // Update a record's data
+    /// </summary>
+    void Update(uint recordId, byte[] data);
 }

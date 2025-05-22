@@ -6,7 +6,6 @@ namespace DatabaseCore;
 
 public class BlockStorage : IBlockStorage
 {
-    z
     /// <summary>
     /// Number of bytes of custom data per block that this storage can handle.
     /// </summary>
