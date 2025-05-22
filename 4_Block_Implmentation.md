@@ -67,6 +67,7 @@ this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 409
     blockHeaderSize: 48,
     diskSectorSize: 512  // 512-byte sectors
 ```
+5. isFirstSectorDirty - flag that firstSector has been modified, and thus needs to be written to the disc
 7. isDisposed - reference to whether or not its deleted? - there's an event handler - yes, safety precaution to make sure removed blocks cannot be accessed
 
 Still confused on why field is 8 bytes?
@@ -85,6 +86,9 @@ Still confused on why field is 8 bytes?
 
     - copyableFromFirstSector - Comparison is < and not <= because e.g. HeaderSize = 10, srcOffSet = 2, DiskSectorSize = 12, the first read byte is outside of the firstSector
     - numBytesToRead - In the form of a min because it's faster/efficient reading based off of DiskSectorSize
+4. Write() -
+    - Writing to a blockcontent - writing to the current block in memory given a src array src?
+    - write data from the src (i think this is a block?) into the current block - don't you have to move onto a new block if exceeds the capacity i don't understnad
 ```
 
 ```
