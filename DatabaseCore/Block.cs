@@ -171,6 +171,7 @@ public class Block : IBlock
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
+        // Makes sure incoming data is always less than BlockSize
         if (destOffSet < 0 || (destOffSet + count > this.storage.BlockContentSize))
         {
 
@@ -220,11 +221,32 @@ public class Block : IBlock
         }
     }
 
+    public override string ToString()
+    {
+        return string.Format("[Block: Id={0}, ContentLength={1}, Prev={2}, Next={3}]"
+            , Id
+            , GetHeader(2)
+            , GetHeader(3)
+            , GetHeader(0));
+    }
+
     private void checkDisposed()
     {
         if (isDisposed)
         {
             throw new ObjectDisposedException("Block");
+        }
+    }
+
+    //
+    // Protected Methods
+    //
+
+    protected virtual void OnDisposed(EventArgs e)
+    {
+        if (Disposed != null)
+        {
+            Disposed(this, e);
         }
     }
 

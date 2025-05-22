@@ -70,8 +70,7 @@ this.cowRecords = new RecordStorage (new BlockStorage(this.mainDatabaseFile, 409
 5. isFirstSectorDirty - flag that firstSector has been modified, and thus needs to be written to the disc
 7. isDisposed - reference to whether or not its deleted? - there's an event handler - yes, safety precaution to make sure removed blocks cannot be accessed
 
-Still confused on why field is 8 bytes?
-
+Header Implementation/Structure [Next Block, ?Unknown?, Content Length of Block, Prev Block]
 
 ### Implementations
 1. Creates a new block in memory? - don't think it is hard written to the stream (yeah this is done through BlockStorage.CreateNew())
@@ -89,6 +88,7 @@ Still confused on why field is 8 bytes?
 4. Write() -
     - Writing to a blockcontent - writing to the current block in memory given a src array src?
     - write data from the src (i think this is a block?) into the current block - don't you have to move onto a new block if exceeds the capacity i don't understnad
+    - this.stream.Flush() - pushes written data immediately onto the stream
 ```
 
 ```
