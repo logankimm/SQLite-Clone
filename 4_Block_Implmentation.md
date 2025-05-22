@@ -28,6 +28,7 @@
 
 #### Protected Methods
 Protected methods can be accessed through subclasses. Code is separated from the Constructor because Block doesn't have access to key variables (e.g. dictionary block) and shouldn't have access to disposed fields b/c it would need access to stored cache (dictionary blocks) and it would never delete itself b/c event handlers ()
+1. OnBlockInitialized() - Block.Diposed += HandleBlockDisposed: subscribes the block to the event disposed
 
 
 ### Individual Blocks
@@ -95,11 +96,22 @@ Header Implementation/Structure [Next Block, ?Unknown?, Content Length of Block,
 
 
 #### Protected Methods
+1. Dispose(bool disposing) - diposing: indicates whether the call is from a dispose call (true) or from finalizer (false)
 
+##### Implementation Example
+```mermaid
+sequenceDiagram
+    participant UserCode
+    participant Block
+    participant BlockStorage
 
-
-### Individual Blocks
-- 
-
+    UserCode->>Block: Dispose()
+    Block->>Block: Dispose(true)
+    Block->>Block: OnDisposed(EventArgs.Empty)
+    Block->>BlockStorage: Disposed.Invoke(this, e)
+    BlockStorage->>BlockStorage: HandleBlockDisposed(sender, e)
+    BlockStorage->>Block: Unsubscribe event
+    BlockStorage->>BlockStorage: Remove block from cache
+```
 
 ### Examples

@@ -246,9 +246,13 @@ public class Block : IBlock
     {
         if (Disposed != null)
         {
-            Disposed(this, e);
+            Disposed(this, e);  // Invokes BlockStorage.HandleBlockDisposed
         }
     }
+
+    //
+    // Dispose
+    //
 
     public void Dispose()
     {
@@ -256,8 +260,26 @@ public class Block : IBlock
         GC.suppressFinalize(this);
     }
 
-    protected virtual void Disposed(bool disposing)
+    protected virtual void Dispose(bool disposing)
     {
+        if (disposing && !isDisposed)
+        {
+            isDisposed = true;
 
+            if (isFirstSectorDirty)
+            {
+                this.stream.Position = (Id * storage.BlockSize);
+                this.stream.Write(firstSector, 0, 4096);
+                this.stream.Flush();
+                isFirstSectorDirty = false;
+            }
+
+            OnDisposed(EventArgs.Empty);
+        }
+    }
+
+    ~Block()
+    {
+        Dispose(false);
     }
 }
