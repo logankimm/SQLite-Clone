@@ -13,7 +13,9 @@ The first block contains a stack of deleted blocks that can be reused/reallocate
 
 ### Functions
 - Find
-    
+    - Default values for header is 00..00. So, previous blockId is set to 0 at start. If it is 0, then it has no containing information, and therefore is invalid?
+    - currBlock.Read() - cast currBlockSize to (int) since its an incoming long? - not sure how this could cause problems but it could I guess
+        - Reading index is already offsetting header size so need to do it again
 
 #### Protected Methods
 
