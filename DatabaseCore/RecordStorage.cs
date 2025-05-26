@@ -111,7 +111,11 @@ public class RecordStorage : IRecordStorage
 
     public uint Create()
     {
-
+        // creates a new record without any data - record is stored within the first block i presume?
+        using (var firstBlock = AllocateBlock())
+        {
+            return firstBlock.Id;
+        }
     }
 
     public uint Create(byte[] data)
@@ -132,5 +136,38 @@ public class RecordStorage : IRecordStorage
     public void Update(uint recordId, byte[] data)
     {
 
+    }
+
+    // 
+    // Private methods
+    // 
+
+    /// <summary>
+    /// Allocate new block for use, either by dequeueing an exising non-used block
+    /// or creating a new one
+    /// </summary>
+    /// <returns>Newly allocated block ready to use.</returns>
+    private Iblock AllocateBlock()
+    {
+        uint newBlockId;
+        Iblock newBlock;
+    }
+
+    private bool findFreeBlock()
+    {
+        var blockId;
+        Iblock = lastBlock, secondLastBlock;
+        GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
+    }
+
+    /// <summary>
+    /// Get the last 2 blocks from the free space tracking record, 
+    /// </summary>
+    private void GetSpaceTrackingBlock(out IBlock lastBlock, out IBlock secondLastBlock)
+    {
+        lastBlock = null;
+        secondLastBlock = null;
+
+        
     }
 }

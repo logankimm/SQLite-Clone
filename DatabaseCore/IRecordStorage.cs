@@ -1,4 +1,6 @@
-namespace DatabaseCore
+using System;
+
+namespace DatabaseCore;
 
 public interface IRecordStorage
 {
@@ -13,22 +15,22 @@ public interface IRecordStorage
     uint Create();
 
     /// <summary>
-    // Create a new record filed with input data and returns a new id
+    /// Create a new record filed with input data and returns a new id
     /// </summary>
     uint Create(byte[] data);
 
-    // <summary>
-    // Creates an empty record given a generator to fill data and returns a new id
-    // </summary>
+    /// <summary>
+    /// Creates an empty record given a generator to fill data and returns a new id
+    /// </summary>
     uint Create(Func<uint, byte[]> dataGenerator);
 
     /// <summary>
-    // Delete recordId and its data
+    /// Delete recordId and its data
     /// </summary>
     void Delete(uint recordId);
 
     /// <summary>
-    // Update a record's data
+    /// Update a record's data
     /// </summary>
     void Update(uint recordId, byte[] data);
 }

@@ -97,6 +97,7 @@ Header Implementation/Structure [Next Block, ?Unknown?, Content Length of Block,
 
 #### Protected Methods
 1. Dispose(bool disposing) - diposing: indicates whether the call is from a dispose call (true) or from finalizer (false)
+    - Disposes the information from the cache and not the data
 
 ##### Implementation Example
 ```mermaid

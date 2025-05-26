@@ -16,6 +16,10 @@ The first block contains a stack of deleted blocks that can be reused/reallocate
     - Default values for header is 00..00. So, previous blockId is set to 0 at start. If it is 0, then it has no containing information, and therefore is invalid?
     - currBlock.Read() - cast currBlockSize to (int) since its an incoming long? - not sure how this could cause problems but it could I guess
         - Reading index is already offsetting header size so need to do it again
+- Create()
+    1. Creates the new block that is empty
+    2. Returns the Id of created block
+    3. Then disposes the data after (the using still occurs even after the return)
 
 #### Protected Methods
 
