@@ -212,7 +212,7 @@ public class RecordStorage : IRecordStorage
     }
 
     /// <summary>
-    /// Get the last 2 blocks from the free space tracking record, 
+    /// Get the last 2 blocks from the free space tracking record, - this is a list of unused/reusable records
     /// </summary>
     private void GetSpaceTrackingBlock(out IBlock lastBlock, out IBlock secondLastBlock)
     {
@@ -220,5 +220,33 @@ public class RecordStorage : IRecordStorage
         secondLastBlock = null;
 
         var blocks = FindBlocks(0);
+
+        try
+        {
+            if (blocks == null || (blocks.Count == 0))
+            {
+                throw new Exception("Failed to find blocks of record 0 (index record)");
+            }
+
+            lastBlock = blocks[blocks.Count - 1];
+            if (blocks.Count > 1)
+            {
+                secondLastBlock = blocks[blocks.Count - 2]
+            }
+        }
+        finally
+        {
+            // Awlays dispose unused blocks
+            if (blocks != null)
+            {
+                foreach (var block in blocks)
+                {
+                    if ((lastBlock == null || block != lastBlock)
+                        && (secondLastBlock == null || block != secondLastBlock))
+                    {
+                        block.Dispose();
+                    }
+                }
+            }
+        }
     }
-}
