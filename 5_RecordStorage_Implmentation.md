@@ -22,7 +22,9 @@ The first block contains a stack of deleted blocks that can be reused/reallocate
     3. Then disposes the data after (the using still occurs even after the return)
 
 #### Protected Methods
-
+- FindBlocks() - Blocks is data type List<IBlock> instead of IBlock[] because List<> allows for variable lengths
+    - the do {} while() is used so that the code always executes once before checking the while condition (for the use case where FindBlocks(0))
+    - finally{} will always occur regardless of what happens in the try clause
 
 
 ### Individual Blocks

@@ -161,6 +161,57 @@ public class RecordStorage : IRecordStorage
     }
 
     /// <summary>
+    /// Find all blocks of a record and return them, 
+    /// </summary>
+    private List<IBlock> FindBlocks(uint recordId)
+    {
+        var blocks = new List<IBlock>();
+        var success = false;
+
+        try
+        {
+            var currBlockId = recordId;
+
+            do
+            {
+                var currBlock = this.storage.Find(currBlockId);
+                if (currBlockId == null)
+                {
+                    if (currBlockId != 0)
+                    {
+                        throw new Exception("Block not found by id: " + currBlockId);
+                    }
+                    // special exception where blockId == 0 and new block needs to be created
+                    currBlock = this.storage.CreateNew();
+                }
+                blocks.Add(currBlock);
+
+                // check if the current block is marked for deletion
+                if (currBlock.GetHeader(kIsDeleted) == 1L)
+                {
+                    throw new Exception("Block not found and should be deleted: " + currBlockId);
+                }
+
+                currBlockId = currBlock.GetHeader(kNextBlockId);
+            } while (currBlockId != 0);
+
+            success = true;
+            return blocks;
+        }
+        finally
+        {
+            // error term, dispose all found blocks
+            if (success == false)
+            {
+                foreach (var block in blocks)
+                {
+                    block.Dipose();
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Get the last 2 blocks from the free space tracking record, 
     /// </summary>
     private void GetSpaceTrackingBlock(out IBlock lastBlock, out IBlock secondLastBlock)
@@ -168,6 +219,6 @@ public class RecordStorage : IRecordStorage
         lastBlock = null;
         secondLastBlock = null;
 
-        
+        var blocks = FindBlocks(0);
     }
 }
