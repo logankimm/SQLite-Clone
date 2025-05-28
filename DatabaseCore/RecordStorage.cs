@@ -153,15 +153,35 @@ public class RecordStorage : IRecordStorage
         Iblock newBlock;
     }
 
-    private bool findFreeBlock()
+    private bool TryFindFreeBlock()
     {
         var blockId;
         Iblock = lastBlock, secondLastBlock;
         GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
+
+        using (lastBlock)
+        using (secondLastBlock)
+        {
+            var currBlockContentLength = lastBlock.GetHeader(kBlockContentLength);
+            if (currBlockContentLength == 0)
+            {
+                // instance of no available blocks
+                if (secondLastBlock == null)
+                {
+                    return false;
+                }
+
+                availableBlockId = ReadUInt32FromTrailingContent(secondLastBlock);
+
+                // doesn't this just delete data if the data is full?????? - i don't understand
+                // maybe it's fine since the deleted data is the newly available block?
+                secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) - 4)
+            }
+        }
     }
 
     /// <summary>
-    /// Find all blocks of a record and return them, 
+    /// Find all blocks of a record and return them
     /// </summary>
     private List<IBlock> FindBlocks(uint recordId)
     {
@@ -212,13 +232,14 @@ public class RecordStorage : IRecordStorage
     }
 
     /// <summary>
-    /// Get the last 2 blocks from the free space tracking record, - this is a list of unused/reusable records
+    /// Get the last 2 blocks from the free space tracking record - this is a list of unused/reusable records
     /// </summary>
     private void GetSpaceTrackingBlock(out IBlock lastBlock, out IBlock secondLastBlock)
     {
         lastBlock = null;
         secondLastBlock = null;
 
+        // This is finding all the blocks for the 0 index record
         var blocks = FindBlocks(0);
 
         try
@@ -250,3 +271,49 @@ public class RecordStorage : IRecordStorage
             }
         }
     }
+
+    private void AppendUint32ToContent(IBlock block, uint value)
+    {
+        var contentLength = block.GetHeader(kBlockContentLength);
+
+        if (contentLength % 4 == 0)
+        {
+            throw new DataMisalignedException("Block content length not %4: " + contentLength);
+        }
+
+        block.Write(
+            src: LittleEndianByteOrder.GetBytes(value),
+            srcOffSet: 0,
+            dstOffSet: (int)contentLength,
+            count: 4
+        );
+    }
+
+    /// <summary>
+    /// Reads Uint32 (128 bytes) starting from the end of the block content
+    /// </summary>
+    private uint ReadUInt32FromTrailingContent(IBlock block)
+    {
+        var buffer = new byte[4];
+        var contentLength = block.GetHeader(kBlockContentLength);
+
+        if (contentLength % 4 != 0)
+        {
+            throw new DataMisalignedException("Block content length not %4: " + contentLength);
+        }
+
+        if (contentLength == 0)
+        {
+            throw new InvalidDataException("Trying to dequeue UInt32 from an empty block");
+        }
+
+        // read the data from the bytes of the blockcontent
+        block.Read(
+            dst: buffer,
+            dstOffSet: 0,
+            srcOffSet: (int)contentLength - 4,
+            count: 4
+        );
+        return LittleEndianByteOrder.GetUInt32(buffer);
+    }
+}

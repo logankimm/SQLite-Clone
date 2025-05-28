@@ -78,7 +78,7 @@ public class Block : IBlock
         }
     }
 
-    // I imagine field is the index at which the length of the header starts and its a constant length
+    // field = headerfieldvalue found in RecordStorage.cs
     public void SetHeader(int field, long value)
     {
         checkDisposed();
