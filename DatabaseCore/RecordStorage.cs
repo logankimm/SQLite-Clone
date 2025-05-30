@@ -149,13 +149,42 @@ public class RecordStorage : IRecordStorage
     /// <returns>Newly allocated block ready to use.</returns>
     private Iblock AllocateBlock()
     {
-        uint newBlockId;
+        uint reusableBlockId;
         Iblock newBlock;
+
+        if (this.TryFindFreeBlock(out reusableBlockId) == false)
+        {
+            // then create a new block
+            newBlock = this.storage.CreateNew();
+
+            if (newBlock == null)
+            {
+                throw new InvalidDataException("Block not found by id: " + resuableBlockId);
+            }
+        }
+        else
+        {
+            newBlock = this.storage.Find(reusableBlockId);
+
+            if (newBlock == null)
+            {
+                throw new InvalidDataException("Block not found by id: " + resuableBlockId);
+            }
+
+            // Update header fields for error checking - not sure if this is necessary
+            newBlock.SetHeader(kBlockContentLength, 0L);
+            newBlock.SetHeader(kNextBlockId, 0L);
+            newBlock.SetHeader(kPreviousBlockId, 0L);
+            newBlock.SetHeader(kRecordLength, 0L);
+            newBlock.SetHeader(kIsDeleted, 0L);
+        }
+
+        return newBlock
     }
 
     private bool TryFindFreeBlock(out uint blockId)
     {
-        var blockId;
+        blockId = 0;
         Iblock = lastBlock, secondLastBlock;
         this.GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
 
