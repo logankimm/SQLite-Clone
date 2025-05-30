@@ -153,16 +153,17 @@ public class RecordStorage : IRecordStorage
         Iblock newBlock;
     }
 
-    private bool TryFindFreeBlock()
+    private bool TryFindFreeBlock(out uint blockId)
     {
         var blockId;
         Iblock = lastBlock, secondLastBlock;
-        GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
+        this.GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
 
         using (lastBlock)
         using (secondLastBlock)
         {
             var currBlockContentLength = lastBlock.GetHeader(kBlockContentLength);
+            // does this mean availalbe contentlength or does it mean total content length used
             if (currBlockContentLength == 0)
             {
                 // instance of no available blocks
@@ -171,11 +172,29 @@ public class RecordStorage : IRecordStorage
                     return false;
                 }
 
-                availableBlockId = ReadUInt32FromTrailingContent(secondLastBlock);
+                // dequeue/pop the next available block (why call it dequeue if it's a stack??????)
+                blockId = this.ReadUInt32FromTrailingContent(secondLastBlock);
 
-                // doesn't this just delete data if the data is full?????? - i don't understand
-                // maybe it's fine since the deleted data is the newly available block?
-                secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) - 4)
+                // update content length after popping the last block from secondLastBlock
+                secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) - 4);
+
+                // lastBlock is now empty, so it is added to secondLastBlock as the next available block to be used/can be used
+                this.AppendUint32ToContent(secondLastBlock, lastBlock.id);
+
+                // update headers accordingly
+                secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) + 4);
+                secondLastBlock.SetHeader(kNextBlockId, 0);
+                lastBlock.SetHeader(kPreviousBlockId, 0);
+
+                return true;
+            }
+            // else do the same thing but for the first block - but why wouldn't you just change the pointer
+            else
+            {
+                blockId = this.ReadUInt32FromTrailingContent(lastBlock);
+                lastBlock.SetHeader(kBlockContentLength, currBlockContentLength - 4);
+
+                return true;
             }
         }
     }
@@ -272,6 +291,9 @@ public class RecordStorage : IRecordStorage
         }
     }
 
+    /// <summary>
+    /// Appends/write Uint32 (128 bytes) starting from the end of the block content
+    /// </summary>
     private void AppendUint32ToContent(IBlock block, uint value)
     {
         var contentLength = block.GetHeader(kBlockContentLength);
@@ -307,7 +329,7 @@ public class RecordStorage : IRecordStorage
             throw new InvalidDataException("Trying to dequeue UInt32 from an empty block");
         }
 
-        // read the data from the bytes of the blockcontent
+        // read the data from the bytes of the blockcontent - reading doesn't delete the content/pop/update it - just writes it to a buffer?
         block.Read(
             dst: buffer,
             dstOffSet: 0,

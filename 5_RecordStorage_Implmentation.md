@@ -27,7 +27,11 @@ RecordStorage is used to handle data with variable length(that ususally exceed t
     - the do {} while() is used so that the code always executes once before checking the while condition (for the use case where FindBlocks(0))
     - finally{} will always occur regardless of what happens in the try clause
 - TryFindFreeBlock() - Helper function to find the next available free block (from deleted/reusable blocks in record 0?)
-    - Check the record 0 content length, if empty -> return false and signify no blocks, else -> dequeue an int?
+    - Check the record 0 content length
+        - if length == 0, pop the last found block in secondLastBlock & then reassign lastBlock to be the next available block in the chain
+        - if length != 0, then pop from lastBlock and update its contentLength by -= 4
+    - Not sure why you can't just return lastblock.id if (currentBlockContentLength == 0), but will look into it later for optimization
+
 
 
 ### Individual Blocks
