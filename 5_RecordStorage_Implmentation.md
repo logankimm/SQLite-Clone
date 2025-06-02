@@ -9,7 +9,8 @@ RecordStorage is used to handle data with variable length(that ususally exceed t
 - TrailingContent == Block Content
 
 ## Class/Interface Attributes
-1. 
+1. kRecordLength - represents the length of data inside the record (so this would match for every single block in a record?)
+    - thinking: this is only for the first block inside a record
 
 
 ### Functions
@@ -25,6 +26,9 @@ RecordStorage is used to handle data with variable length(that ususally exceed t
     - dataGenerator: is a function that takes in input uint and return a byte[]
 - Delete()
     - Doesn't reset the data within teh block here (not sure why this is the case? - isn't more memory efficient to rewrite/delete the content here to free up memory?)
+- Update()
+    - Could input byte[] data be a pointer instead of the actual data
+    - I'm pretty sure it replaces teh entire contents instead of editing a single portion of the data
 
 #### Protected Methods
 - FindBlocks() - Blocks is data type List<IBlock> instead of IBlock[] because List<> allows for variable lengths

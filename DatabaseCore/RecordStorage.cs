@@ -162,7 +162,7 @@ public class RecordStorage : IRecordStorage
 
                 using (currBlock)
                 {
-                    var writeLength = (int)Math.min(this.storage.BlockContentSize, dataToWrite - dataWritten);
+                    var writeLength = (int)Math.Min(this.storage.BlockContentSize, dataToWrite - dataWritten);
                     currBlock.Write(
                         src: data,
                         srcOffSet: dataWritten,
@@ -238,7 +238,7 @@ public class RecordStorage : IRecordStorage
                     // what reason could there be for this if statement i don't understand
                     // wouldn't this check be needed to be done earlier to be effective?
                     // og code has this as currBlock but im p sure this is supposed to be nextBlock
-                    if (nextBlock == null)
+                    if (currBlock == null || nextBlock == null)
                     {
                         throw new InvalidDataException("Block not found by id: " + nextBlockId);
                     }
@@ -255,7 +255,80 @@ public class RecordStorage : IRecordStorage
 
     public virtual void Update(uint recordId, byte[] data)
     {
-        
+        var dataWritten = 0;
+        var total = data.Length;
+        var blocks = this.FindBlocks(recordId);
+        var blocksParsed = 0;
+        IBlock prevBlock = null;
+
+        try
+        {
+            while (written < total)
+            {
+                var writeLength = Math.Min(total - dataWritten, this.storage.BlockContentSize);
+                // i don't think casting as double is necessary and only needs to be an int im p sure
+                var blockIndex = (int)Math.Floor((double)dataWritten / (double)this.storage.blockContentSize);
+
+                // find the write block to write to
+                IBlock currBlock = null;
+                if (blockIndex < blocks.Count)
+                {
+                    currBlock = blocks[blockIndex];
+                }
+                // if block is out of bounds then create a new block and add to List
+                else
+                {
+                    currBlock = this.AllocateBlock();
+                    if (currBlock == null)
+                    {
+                        throw new Exception("Failed to allocate new block");
+                    }
+                    blocks.Add(newBlock);
+                }
+
+                if (prevBlock != null)
+                {
+                    currBlock.SetHeader(kPreviousBlockId, prevBlock.Id);
+                    prevBlock.SetHeader(kNextBlockId, currBlock.Id);
+                }
+
+                // write to the block
+                currBlock.Write(
+                    src: data,
+                    srcOffSet: dataWritten,
+                    dstOffSet: 0,
+                    count: writeLength
+                );
+                currBlock.SetHeader(kBlockContentLength, writeLength);
+                // this is necessary in case the update is a reduction in data so there is potentially no next block needed
+                currBlock.SetHeader(kNextBlockId, 0);
+                if (dataWritten == 0)
+                {
+                    currBlock.SetHeader(kRecordLength, total);
+                }
+
+                blocksParsed++;
+                dataWritten += writeLength;
+                prevBlock = currBlock;
+            }
+
+            // Scenario: if update reduces blocks length delete excess blocks that are no longer used
+            if (blocksParsed < blocks.Count)
+            {
+                for (int i = blocksParsed; i < blocks.Count; i++)
+                {
+                    this.MarkAsFree(blocks[i].Id);
+                }
+            }
+        }
+        // memory disposal
+        finally
+        {
+            foreach (var block in blocks)
+            {
+                block.Dispose();
+            }
+        }
     }
 
     // 
