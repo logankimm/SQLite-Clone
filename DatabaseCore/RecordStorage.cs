@@ -112,7 +112,7 @@ public class RecordStorage : IRecordStorage
     public uint Create()
     {
         // creates a new record without any data - record is stored within the first block i presume?
-        using (var firstBlock = AllocateBlock())
+        using (var firstBlock = this.AllocateBlock())
         {
             return firstBlock.Id;
         }
@@ -120,12 +120,95 @@ public class RecordStorage : IRecordStorage
 
     public uint Create(byte[] data)
     {
+        if (data == null)
+        {
+            throw new ArgumentException();
+        }
 
+        // recordId is the id from the Create(generator), 
+        return Create(recordId => data);
     }
 
     public uint Create(Func<uint, byte[]> dataGenerator)
     {
+        if (dataGenerator == null)
+        {
+            throw new ArgumentException("Data Generatr is null");
+        }
 
+        using (var firstBlock = AllocateBlock())
+        {
+            var returnId = firstBlock.Id;
+
+            var data = dataGenerator(returnId);
+            var dataWritten = 0;
+            var dataToWrite = data.Length;
+
+            // wouldn't this be the maximum (blockSize, dataToWrite)?
+            firstBlock.SetHeader(kBlockContentLength, dataToWrite);
+
+            // check if there is no data to be written
+            if (dataToWrite == 0)
+            {
+                return returnId;
+            }
+
+            // continue writing the rest of the data
+            Iblock currBlock = firstBlock;
+            while (dataWritten < dataToWrite)
+            {
+                // assigned outside of using so that it isn't disposed of 
+                Iblock nextBlock = null;
+
+                using (currBlock)
+                {
+                    var writeLength = (int)Math.min(this.storage.BlockContentSize, dataToWrite - dataWritten);
+                    currBlock.Write(
+                        src: data,
+                        srcOffSet: dataWritten,
+                        dstOffSet: 0,
+                        count: writeLength
+                    );
+                    currBlock.SetHeader(kBlockContentLength, writeLength);
+                    dataWritten += writeLength;
+
+                    // move to next block to continue reading
+                    if (dataWritten < dataToWrite)
+                    {
+                        nextBlock = AllocateBlock();
+
+                        // error checking
+                        var success = false;
+                        try
+                        {
+                            nextBlock.SetHeader(kPreviousBlockId, currBlock.Id);
+                            currBlock.SetHeader(kNextBlockId, nextBlock.Id);
+                            success = true;
+                        }
+                        finally
+                        {
+                            if ((success == false) && (nextBlock != null))
+                            {
+                                nextBlock.Dipose();
+                                nextBlock = null;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                }
+                
+                if (nextBlock != null)
+                {
+                    currBlock = nextBlock;
+                }
+            }
+
+            return returnId;
+        }
     }
 
     public void Delete(uint recordId)
