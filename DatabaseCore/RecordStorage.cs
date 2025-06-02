@@ -200,7 +200,7 @@ public class RecordStorage : IRecordStorage
                     }
 
                 }
-                
+
                 if (nextBlock != null)
                 {
                     currBlock = nextBlock;
@@ -213,7 +213,44 @@ public class RecordStorage : IRecordStorage
 
     public void Delete(uint recordId)
     {
+        using (var block = this.storage.Find(recordId))
+        {
+            IBlock currBlock = block;
+            while (true)
+            {
+                Iblock nextBlock = null;
 
+                using (currBlock)
+                {
+                    // delete the current block,
+                    this.MarkAsFree(currBlock.id);
+
+                    // rewrite next block length and delete data
+                    currBlock.SetHeader(kIsDeleted, 1L);
+                    var nextBlockId = (uint)currBlock.GetHeader(kNextBlockId);
+
+                    if (nextBlockId == 0)
+                    {
+                        break;
+                    }
+
+                    nextBlock = this.storage.Find(nextBlockId);
+                    // what reason could there be for this if statement i don't understand
+                    // wouldn't this check be needed to be done earlier to be effective?
+                    // og code has this as currBlock but im p sure this is supposed to be nextBlock
+                    if (nextBlock == null)
+                    {
+                        throw new InvalidDataException("Block not found by id: " + nextBlockId);
+                    }
+                }
+
+                // check if there's a next block, if there is, move current block to the next block
+                if (nextBlock != null)
+                {
+                    currBlock = nextBlock;
+                }
+            }
+        }
     }
 
     public void Update(uint recordId, byte[] data)
@@ -404,7 +441,7 @@ public class RecordStorage : IRecordStorage
     }
 
     /// <summary>
-    /// Appends/write Uint32 (128 bytes) starting from the end of the block content
+    /// Appends/write Uint32 (128 bytes) starting from the end of the block content by converting it into a bytearray
     /// </summary>
     private void AppendUint32ToContent(IBlock block, uint value)
     {
@@ -449,5 +486,47 @@ public class RecordStorage : IRecordStorage
             count: 4
         );
         return LittleEndianByteOrder.GetUInt32(buffer);
+    }
+
+    private void MarkAsFree(uint blockId)
+    {
+        // targetBlock is the available recordIdBlock
+        IBlock lastBlock, secondLastBlock, targetBlock = null;
+        GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
+
+        using (lastBlock)
+        using (secondLastBlock)
+        {
+            try
+            {
+                var recordLength = lastBlock.GetHeader(kBlockContentLength);
+                // when there is available space in the last block
+                if (recordLength + 4 <= this.storage.BlockContentSize)
+                {
+                    targetBlock = lastBlock;
+                }
+                else
+                {
+                    // change secondLastBlock to lastBlock
+                    targetBlock = AllocateBlock();
+                    
+                    lastBlock.SetHeader(kNextBlockId, targetBlock.Id);
+                    targetBlock.SetHeader(kPreviousBlockId, lastBlock.Id);
+                }
+
+                // add the blockId to the record keeper
+                this.AppendUint32ToContent(targetBlock, blockId);
+
+                // update header field afterwards since change was made
+                targetBlock.SetHeader(kBlockContentLength, recordLength + 4);
+            }
+            finally
+            {
+                if (targetBlock != null)
+                {
+                    targetBlock.Dispose();
+                }
+            }
+        }
     }
 }

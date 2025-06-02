@@ -23,6 +23,8 @@ RecordStorage is used to handle data with variable length(that ususally exceed t
     3. Then disposes the data after (the using still occurs even after the return)
 - Create(dataGenerator)
     - dataGenerator: is a function that takes in input uint and return a byte[]
+- Delete()
+    - Doesn't reset the data within teh block here (not sure why this is the case? - isn't more memory efficient to rewrite/delete the content here to free up memory?)
 
 #### Protected Methods
 - FindBlocks() - Blocks is data type List<IBlock> instead of IBlock[] because List<> allows for variable lengths
