@@ -37,7 +37,7 @@ public class RecordStorage : IRecordStorage
     //
     // Public Methods
     //
-    public byte[] Find(byte[] recordId)
+    public virtual byte[] Find(byte[] recordId)
     {
         // go to block number
         // using ensures the block is properly diposed of after use
@@ -109,7 +109,7 @@ public class RecordStorage : IRecordStorage
         }
     }
 
-    public uint Create()
+    public virtual uint Create()
     {
         // creates a new record without any data - record is stored within the first block i presume?
         using (var firstBlock = this.AllocateBlock())
@@ -118,7 +118,7 @@ public class RecordStorage : IRecordStorage
         }
     }
 
-    public uint Create(byte[] data)
+    public virtual uint Create(byte[] data)
     {
         if (data == null)
         {
@@ -129,7 +129,7 @@ public class RecordStorage : IRecordStorage
         return Create(recordId => data);
     }
 
-    public uint Create(Func<uint, byte[]> dataGenerator)
+    public virtual uint Create(Func<uint, byte[]> dataGenerator)
     {
         if (dataGenerator == null)
         {
@@ -211,7 +211,7 @@ public class RecordStorage : IRecordStorage
         }
     }
 
-    public void Delete(uint recordId)
+    public virtual void Delete(uint recordId)
     {
         using (var block = this.storage.Find(recordId))
         {
@@ -253,9 +253,9 @@ public class RecordStorage : IRecordStorage
         }
     }
 
-    public void Update(uint recordId, byte[] data)
+    public virtual void Update(uint recordId, byte[] data)
     {
-
+        
     }
 
     // 
