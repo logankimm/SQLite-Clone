@@ -12,7 +12,7 @@ public class Block : IBlock
     readonly Stream stream;
     readonly BlockStorage storage;
 
-    bool isFirstSectionDirty = false;
+    bool isFirstSectorDirty = false;
     bool isDisposed = false;
     readonly uint id;
 
@@ -41,7 +41,7 @@ public class Block : IBlock
             throw new ArgumentException("firstSector length must be " + storage.DiskSectorSize);
 
         this.storage = storage;
-        this.id = id
+        this.id = id;
         this.firstSector = firstSector;
         this.stream = stream;
     }
@@ -70,11 +70,11 @@ public class Block : IBlock
             {
                 cachedHeaderValue[field] = BufferHelper.ReadBufferInt64(firstSector, field * 8);
             }
-            return (long)cachedHeaderValue[field];
+            return (long)cachedHeaderValue[field]!;
         }
         else
         {
-            return BufferHelper.ReadBufferInt64(firstSector, field * 8)
+            return BufferHelper.ReadBufferInt64(firstSector, field * 8);
         }
     }
 
@@ -97,7 +97,7 @@ public class Block : IBlock
         BufferHelper.WriteBuffer((long)value, firstSector, field * 8);
         isFirstSectorDirty = true;
     }
-    public void Read(byte[] dest, int destOffSet, int srcOffSet, int count)
+    public void Read(byte[] dest, int destOffset, int srcOffSet, int count)
     {
         checkDisposed();
 
@@ -114,17 +114,17 @@ public class Block : IBlock
         // dataCopied = index of bytes that have been read?
         var dataIndexRead = 0;
 
-        var bool copyableFromFirstSector = (this.storage.BlockHeaderSize + srcOffSet < this.storage.DiskSectorSize);
+        var copyableFromFirstSector = (this.storage.BlockHeaderSize + srcOffSet < this.storage.DiskSectorSize);
         // Read available data from the cached memory first
         if (copyableFromFirstSector)
         {
             // First part of the min is just making sure that its within boundaries of the firstSector
-            var numCacheBytesToRead = Math.min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - srcOffSet, count);
+            var numCacheBytesToRead = Math.Min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - srcOffSet, count);
             Buffer.BlockCopy(
                 src: this.firstSector,
-                srcOffSet: this.storage.BlockHeaderSize + srcOffSet,
+                srcOffset: this.storage.BlockHeaderSize + srcOffSet,
                 dst: dest,
-                destOffSet: destOffSet,
+                dstOffset: destOffset,
                 count: numCacheBytesToRead
             );
 
@@ -141,28 +141,29 @@ public class Block : IBlock
             }
             else
             {
-                this.stream.Position = (this.id * this.storage.BlockSize) + this.storage.BlockStorage + srcOffSet;
+                this.stream.Position = (this.id * this.storage.BlockSize) + this.storage.BlockHeaderSize + srcOffSet;
             }
         }
 
         while (dataIndexRead < count)
         {
-            var numBytesToRead = Math.min(this.storage.DiskSectorSize, count - dataIndexRead);
-            this.stream.Read(
-                dst: dest,
-                destOffSet: destOffSet + dataIndexRead,
+            var numBytesToRead = Math.Min(this.storage.DiskSectorSize, count - dataIndexRead);
+            var thisRead = this.stream.Read(
+                buffer: dest,
+                offset: destOffset + dataIndexRead,
                 count: numBytesToRead
             );
+
             // Error statement that only triggers if the stream index being read doesn't exist
             if (thisRead == 0)
             {
                 throw new EndOfStreamException();
             }
-            dataIndexRead += numCacheBytesToRead;
+            dataIndexRead += thisRead;
         }
     }
 
-    public void Write(byte[] src, int srcOffSet, int destOffSet, int count)
+    public void Write(byte[] src, int srcOffSet, int destOffset, int count)
     {
         checkDisposed();
 
@@ -172,43 +173,43 @@ public class Block : IBlock
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
         // Makes sure incoming data is always less than BlockSize
-        if (destOffSet < 0 || (destOffSet + count > this.storage.BlockContentSize))
+        if (destOffset < 0 || (destOffset + count > this.storage.BlockContentSize))
         {
 
             throw new ArgumentOutOfRangeException("Count argument is outside of dest bounds: Count=" + count, "count");
         }
 
         // check if it can be written into the first sector
-        if (this.storage.BlockHeaderSize + destOffSet, this.storage.DiskSectorSize)
+        if (this.storage.BlockHeaderSize + destOffset, this.storage.DiskSectorSize)
         {
-            var sectorBytesWritten = Math.min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - destOffSet, count);
+            var sectorBytesWritten = Math.Min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - destOffset, count);
             Buffer.BlockCopy(
                 src: src,
                 srcOffSet: srcOffSet,
                 dst: this.firstSector,
-                destOffSet: this.storage.BlockHeaderSize + destOffSet,
+                destOffset: this.storage.BlockHeaderSize + destOffset,
                 count: sectorBytesWritten
             );
 
             // if the count is reached after writing to firstSector, then there's no reason to trigger next if statement
             // therefore, offSet/current position can just be set to DiskSectorSize
-            destOffSet += sectorBytesWritten;
+            destOffset += sectorBytesWritten;
             srcOffSet += sectorBytesWritten;
             count -= sectorBytesWritten;
             isFirstSectionDirty = true;
         }
 
         // write the rest of the data to post-blocksize - but what if the block overfills??????????????????
-        if (this.storage.BlockHeaderSize + destOffSet + count > this.storage.DiskSectorSize)
+        if (this.storage.BlockHeaderSize + destOffset + count > this.storage.DiskSectorSize)
         {
-            // max is necessary for when writing to a position in the block that is out of DiskSectorSize. E.g. DiskSectorSize = 4096, destOffSet = 5670
-            this.stream.Position = (Id * this.storage.BlockSize) + Math.max(this.storage.DiskSectorSize, this.storage.BlockHeaderSize + destOffSet);
+            // max is necessary for when writing to a position in the block that is out of DiskSectorSize. E.g. DiskSectorSize = 4096, destOffset = 5670
+            this.stream.Position = (Id * this.storage.BlockSize) + Math.Max(this.storage.DiskSectorSize, this.storage.BlockHeaderSize + destOffset);
 
             // Write remaining rest of bytes
             var bytesWritten = 0;
             while (bytesWritten < count)
             {
-                var bytesToWrite = Math.min(4096, count - bytesWritten)
+                var bytesToWrite = Math.Min(4096, count - bytesWritten)
                 this.stream.Write(
                     src: src,
                     srcOffSet: srcOffSet + bytesWritten,
