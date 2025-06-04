@@ -115,7 +115,7 @@ public class BlockStorage : IBlockStorage
         this.stream.Flush();
 
         // construct new block
-        var block = new Block(this, blockId, firstSector, this.stream);
+        var block = new Block(this, blockId, new byte[DiskSectorSize], this.stream);
         OnBlockInitialized(block);
         return block;
     }
@@ -124,7 +124,9 @@ public class BlockStorage : IBlockStorage
     protected virtual void OnBlockInitialized(Block block)
     {
         blocks[block.Id] = block;
-        block.Diposed += HandleBlockDisposed;
+
+        // when disposed remove it from memory
+        block.Disposed += HandleBlockDisposed;
     }
 
     protected virtual void HandleBlockDisposed(object sender, EventArgs e)
