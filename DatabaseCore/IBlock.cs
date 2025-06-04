@@ -13,7 +13,7 @@ public interface IBlock : IDisposable
     /// </summary>
     long GetHeader(int field);
     void SetHeader(int field, long newHeader);
-    void Read(byte[] dst, int dstOffSet, int srcOffSet, int count);
+    void Read(byte[] dest, int dstOffset, int srcOffset, int count);
 
     /// <summary>
     /// Write content of given buffer (src) into this (dst)

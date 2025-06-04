@@ -95,7 +95,7 @@ public class Block : IBlock
         BufferHelper.WriteBuffer((long)value, firstSector, field * 8);
         isFirstSectorDirty = true;
     }
-    public void Read(byte[] dest, int destOffset, int srcOffset, int count)
+    public void Read(byte[] dest, int dstOffset, int srcOffset, int count)
     {
         this.checkDisposed();
 
@@ -104,7 +104,7 @@ public class Block : IBlock
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
-        if ((count + destOffset) > dest.Length)
+        if ((count + dstOffset) > dest.Length)
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of dest bounds: Count=" + count);
         }
@@ -122,7 +122,7 @@ public class Block : IBlock
                 src: this.firstSector,
                 srcOffset: this.storage.BlockHeaderSize + srcOffset,
                 dst: dest,
-                dstOffset: destOffset,
+                dstOffset: dstOffset,
                 count: numCacheBytesToRead
             );
 
@@ -148,7 +148,7 @@ public class Block : IBlock
             var numBytesToRead = Math.Min(this.storage.DiskSectorSize, count - dataIndexRead);
             var thisRead = this.stream.Read(
                 buffer: dest,
-                offset: destOffset + dataIndexRead,
+                offset: dstOffset + dataIndexRead,
                 count: numBytesToRead
             );
 
@@ -161,7 +161,7 @@ public class Block : IBlock
         }
     }
 
-    public void Write(byte[] src, int srcOffset, int destOffset, int count)
+    public void Write(byte[] src, int srcOffset, int dstOffset, int count)
     {
         this.checkDisposed();
 
@@ -171,36 +171,36 @@ public class Block : IBlock
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
         // Makes sure incoming data is always less than BlockSize
-        if (destOffset < 0 || (destOffset + count > this.storage.BlockContentSize))
+        if (dstOffset < 0 || (dstOffset + count > this.storage.BlockContentSize))
         {
             throw new ArgumentOutOfRangeException("Count argument is outside of dest bounds: Count=" + count, "count");
         }
 
         // check if it can be written into the first sector
-        if ((this.storage.BlockHeaderSize + destOffset) < this.storage.DiskSectorSize)
+        if ((this.storage.BlockHeaderSize + dstOffset) < this.storage.DiskSectorSize)
         {
-            var sectorBytesWritten = Math.Min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - destOffset, count);
+            var sectorBytesWritten = Math.Min(this.storage.DiskSectorSize - this.storage.BlockHeaderSize - dstOffset, count);
             Buffer.BlockCopy(
                 src: src,
                 srcOffset: srcOffset,
                 dst: this.firstSector,
-                dstOffset: this.storage.BlockHeaderSize + destOffset,
+                dstOffset: this.storage.BlockHeaderSize + dstOffset,
                 count: sectorBytesWritten
             );
 
             // if the count is reached after writing to firstSector, then there's no reason to trigger next if statement
             // therefore, offSet/current position can just be set to DiskSectorSize
-            destOffset += sectorBytesWritten;
+            dstOffset += sectorBytesWritten;
             srcOffset += sectorBytesWritten;
             count -= sectorBytesWritten;
             isFirstSectorDirty = true;
         }
 
         // write the rest of the data to post-blocksize - but what if the block overfills??????????????????
-        if ((this.storage.BlockHeaderSize + destOffset + count) > this.storage.DiskSectorSize)
+        if ((this.storage.BlockHeaderSize + dstOffset + count) > this.storage.DiskSectorSize)
         {
-            // max is necessary for when writing to a position in the block that is out of DiskSectorSize. E.g. DiskSectorSize = 4096, destOffset = 5670
-            this.stream.Position = (Id * this.storage.BlockSize) + Math.Max(this.storage.DiskSectorSize, this.storage.BlockHeaderSize + destOffset);
+            // max is necessary for when writing to a position in the block that is out of DiskSectorSize. E.g. DiskSectorSize = 4096, dstOffset = 5670
+            this.stream.Position = (Id * this.storage.BlockSize) + Math.Max(this.storage.DiskSectorSize, this.storage.BlockHeaderSize + dstOffset);
 
             // Write remaining rest of bytes
             var bytesWritten = 0;
