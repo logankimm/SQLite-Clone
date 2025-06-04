@@ -40,7 +40,7 @@ public class BlockStorage : IBlockStorage
         }
     }
 
-    public int blockContentSize
+    public int BlockContentSize
     {
         get
         {
