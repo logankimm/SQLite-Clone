@@ -32,3 +32,21 @@ Indexing through a B-tree allows for search based on multiple key value pairs (e
 
 ### Purpose
 I have no clue
+
+## TreeNode
+
+### Purpose
+Individual nodes within the B-Tree
+
+#### Special Notes
+- Constructor:
+    - List(3) - specificies initial length of 3
+
+### Class/Interface Attributes
+1. entries
+
+
+### Functions
+
+
+#### Protected Methods

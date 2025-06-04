@@ -65,7 +65,7 @@ public class BlockStorage : IBlockStorage
             throw new ArgumentException("blockSize too small");
         }
 
-        this.unitOfWork = ((blockSize >= 4096) ? 4096 : 128)
+        this.unitOfWork = ((blockSize >= 4096) ? 4096 : 128);
         this.blockSize = blockSize;
         this.blockHeaderSize = blockHeaderSize;
         this.blockContentSize = blockSize - blockHeaderSize;
@@ -89,7 +89,7 @@ public class BlockStorage : IBlockStorage
         }
 
         // Now that you know it exists read through the stream and return the block - stream position will always match blockId? - how does deletion work
-        var firstSector = byte[DiskSectorSize];
+        var firstSector = new byte[DiskSectorSize];
         stream.Position = blockId * blockSize;
         stream.Read(firstSector, 0, DiskSectorSize);
 
