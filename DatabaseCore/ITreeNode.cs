@@ -12,7 +12,7 @@ public interface ITreeNode<K, V>
     bool IsOverflow { get; }
     int EntriesCount { get; }
     int ChildrenNodeCount { get; }
-    uint ParentId { get; set; }
+    uint ParentId { get; }
     uint[] ChildrenIds { get; }
     Tuple<K, V>[] Entries { get; }
     uint Id { get; }

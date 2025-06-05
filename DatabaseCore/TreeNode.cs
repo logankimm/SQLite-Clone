@@ -9,7 +9,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
 {
     protected uint id = 0;
     protected uint parentId;
-    protected readonly ITreeNodeManger<K, V> nodeManger;
+    protected readonly ITreeNodeManager<K, V> nodeManager;
     protected readonly List<uint> childrenIds;
     protected readonly List<Tuple<K, V>> entries;
 
@@ -49,7 +49,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     {
         get
         {
-            return entries.Count > (nodeManger.MinEntriesPerNode * 2);
+            return entries.Count > (nodeManager.MinEntriesPerNode * 2);
         }
     }
 
@@ -79,7 +79,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         private set
         {
             parentId = value;
-            nodeManger.MarkAsChanged(this);
+            nodeManager.MarkAsChanged(this);
         }
     }
 
@@ -87,7 +87,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     {
         get
         {
-            return childrenIds.toArray();
+            return childrenIds.ToArray();
         }
     }
 
@@ -95,7 +95,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     {
         get
         {
-            return entries.toArray();
+            return entries.ToArray();
         }
     }
 
@@ -110,13 +110,13 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         }
     }
 
-    public TreeNode(ITreeNodeManager<K, V> nodeManger,
+    public TreeNode(ITreeNodeManager<K, V> nodeManager,
         uint id,
         uint parentId,
         IEnumerable<Tuple<K, V>> entries = null,
-        IEnumerable<Tuple<K, V>> childrenIds = null)
+        IEnumerable<uint> childrenIds = null)
     {
-        if (nodeManger == null)
+        if (nodeManager == null)
         {
             throw new ArgumentNullException(nameof(nodeManager));
         }
@@ -125,13 +125,13 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         this.parentId = parentId;
 
         // for read-only attributes/fields
-        this.nodeManger = nodeManger;
+        this.nodeManager = nodeManager;
         this.childrenIds = new List<uint>();
         this.entries = new List<Tuple<K, V>>(this.nodeManager.MinEntriesPerNode * 2);
 
         if (entries != null)
         {
-            this.entries.AddRange(entires);
+            this.entries.AddRange(entries);
         }
         if (childrenIds != null)
         {
@@ -140,6 +140,63 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     }
 
     public void Remove(int removeAt)
+    {
+        if (removeAt < 0 || removeAt >= this.entries.Count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        
+    }
+
+    public void InsertAsLeaf(K key, V value, int insertPosition)
+    {
+
+    }
+
+    public void InsertAsParent(K key, V value, uint leftReference, uint rightReference, out int insertPosition)
+    {
+        insertPosition = 0;
+        return;
+    }
+
+    public void Split(out ITreeNode<K, V> outLeftNode, out ITreeNode<K, V> outRightNode)
+    {
+
+    }
+
+    // Search Operations
+    public int BinarySearchEntriesForKey(K key)
+    {
+        return 0;
+    }
+    public int BinarySearchEntriesForKey(K key, bool firstOccurence)
+    {
+
+    }
+    public void FindLargest(out ITreeNode<K, V> node, out int index)
+    {
+
+    }
+    public void FindSmallest(out ITreeNode<K, V> node, out int index)
+    {
+
+    }
+    
+    // Navigation
+    public int IndexInParent()
+    {
+
+    }
+    public ITreeNode<K, V> GetChildNode(int atIndex)
+    {
+
+    }
+    public Tuple<K, V> GetEntry(int atIndex)
+    {
+
+    }
+    public bool EntryExists(int atIndex)
     {
 
     }
