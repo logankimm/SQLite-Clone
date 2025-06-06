@@ -68,6 +68,7 @@ Structure:
 1. entries - list of indicies within each node
 4. childrenIds - I assume these are pointers for children nodes - why is it a list of tuples - couldn't this be pointers instead?
     - Leaf nodes are nodes that have 0 children, or are at the bottom of the tree
+index?
 
 
 ### Functions

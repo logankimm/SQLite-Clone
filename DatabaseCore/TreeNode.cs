@@ -146,7 +146,11 @@ public class TreeNode<K, V> : ITreeNode<K, V>
             throw new ArgumentOutOfRangeException();
         }
 
-        
+
+        if IsLeaf()
+        {
+
+        }
     }
 
     public void InsertAsLeaf(K key, V value, int insertPosition)
@@ -182,11 +186,31 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     {
 
     }
-    
-    // Navigation
+
+
+    /// <summary>
+    /// Get this node's index in its parent
+    /// e.g. parent node: [A, B, C], for node A it would return 0
+    /// </summary>
     public int IndexInParent()
     {
+        var parent = nodeManager.Find(parentId);
+        if (parent == null)
+        {
+            throw new Exception("IndexInParent fails to find parent node of " + id);
+        }
 
+        var childrenIds = parent.ChildrenIds;
+        // Length is used since ChildrenIds capitalized returns a ToArray
+        for (int i = 0; i < childrenIds.Length; i++)
+        {
+            if (this.id == childrenIds[i])
+            {
+                return i;
+            }
+        }
+        
+        throw new Exception("Failed to find index of node " + id + " in its parent");
     }
     public ITreeNode<K, V> GetChildNode(int atIndex)
     {
