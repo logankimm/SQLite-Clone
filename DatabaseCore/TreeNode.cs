@@ -178,13 +178,36 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     {
 
     }
+
+    /// <summary>
+    /// Find largest node on the subtree
+    /// </summary>
     public void FindLargest(out ITreeNode<K, V> node, out int index)
     {
+        if (IsLeaf == true)
+        {
+            node = this;
+            index = entries.Count - 1;
+            return;
+        }
 
+        // recursive formula to find it
+        var rightMostNode = nodeManager.Find(this.childrenIds[this.childrenIds.Count -1]);
+        rightMostNode.FindLargest (out node, out index);
     }
+
     public void FindSmallest(out ITreeNode<K, V> node, out int index)
     {
+        if (IsLeaf == true)
+        {
+            node = this;
+            index = 0;
+            return;
+        }
 
+        // recursive formula to find it
+        var leftMostNode = nodeManager.Find(this.childrenIds[0]);
+        leftMostNode.FindSmallest (out node, out index);
     }
 
 
