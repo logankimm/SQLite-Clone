@@ -72,9 +72,29 @@ index?
 
 
 ### Functions
-
+1. remove - why is parentId == 0 included in this if statement?
 
 #### Protected Methods
+1. rebalance
+    - indexInParent - 1 = index of the leftSibling
+
+graph TD
+    subgraph Before Rotation
+        P[Parent: [10, 20]]
+        D[Deficient: [5]]
+        R[Right Sibling: [15, 18, 25]]
+        P --> D
+        P --> R
+    end
+    
+    subgraph After Rotation
+        P2[Parent: [15, 20]]
+        D2[Deficient: [5, 10]]
+        R2[Right Sibling: [18, 25]]
+        P2 --> D2
+        P2 --> R2
+    end
+
 
 ## TreeNodeManager
 

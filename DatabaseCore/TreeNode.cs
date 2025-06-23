@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace DatabaseCore;
 
-public class TreeNode<K, V> : ITreeNode<K, V>
+public class TreeNode<K, V>
 {
     protected uint id = 0;
     protected uint parentId;
@@ -147,9 +147,20 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         }
 
 
-        if IsLeaf()
+        if (IsLeaf)
         {
+            entries.RemoveAt(removeAt);
+            nodeManager.MarkAsChanged(this);
 
+            // check if minimum number of entries is met and adjust if so
+            if (EntriesCount >= nodeManager.MinEntriesPerNode || parentId == 0)
+            {
+                return;
+            }
+            else
+            {
+                this.Rebalance();
+            }
         }
     }
 
@@ -164,7 +175,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         return;
     }
 
-    public void Split(out ITreeNode<K, V> outLeftNode, out ITreeNode<K, V> outRightNode)
+    public void Split(out TreeNode<K, V> outLeftNode, out TreeNode<K, V> outRightNode)
     {
 
     }
@@ -182,7 +193,7 @@ public class TreeNode<K, V> : ITreeNode<K, V>
     /// <summary>
     /// Find largest node on the subtree
     /// </summary>
-    public void FindLargest(out ITreeNode<K, V> node, out int index)
+    public void FindLargest(out TreeNode<K, V> node, out int index)
     {
         if (IsLeaf == true)
         {
@@ -192,11 +203,11 @@ public class TreeNode<K, V> : ITreeNode<K, V>
         }
 
         // recursive formula to find it
-        var rightMostNode = nodeManager.Find(this.childrenIds[this.childrenIds.Count -1]);
-        rightMostNode.FindLargest (out node, out index);
+        var rightMostNode = nodeManager.Find(this.childrenIds[this.childrenIds.Count - 1]);
+        rightMostNode.FindLargest(out node, out index);
     }
 
-    public void FindSmallest(out ITreeNode<K, V> node, out int index)
+    public void FindSmallest(out TreeNode<K, V> node, out int index)
     {
         if (IsLeaf == true)
         {
@@ -207,12 +218,12 @@ public class TreeNode<K, V> : ITreeNode<K, V>
 
         // recursive formula to find it
         var leftMostNode = nodeManager.Find(this.childrenIds[0]);
-        leftMostNode.FindSmallest (out node, out index);
+        leftMostNode.FindSmallest(out node, out index);
     }
 
 
     /// <summary>
-    /// Get this node's index in its parent
+    /// Get this node's index in its parent's childrenIds
     /// e.g. parent node: [A, B, C], for node A it would return 0
     /// </summary>
     public int IndexInParent()
@@ -232,19 +243,90 @@ public class TreeNode<K, V> : ITreeNode<K, V>
                 return i;
             }
         }
-        
+
         throw new Exception("Failed to find index of node " + id + " in its parent");
     }
-    public ITreeNode<K, V> GetChildNode(int atIndex)
+    public TreeNode<K, V> GetChildNode(int atIndex)
     {
-
+        return nodeManager.Find(childrenIds[atIndex]);
     }
     public Tuple<K, V> GetEntry(int atIndex)
     {
-
+        return entries[atIndex];
     }
     public bool EntryExists(int atIndex)
     {
+        return atIndex < entries.Count;
+    }
 
+
+
+    //
+    // Private Methods
+    //
+
+    /// <summary>
+    /// Rebalance this node after an element has been removed causing it to underflow
+    /// </summary>
+    private void Rebalance()
+    {
+        // check if the right sibling exists and add a node to the left child
+        var indexInParent = IndexInParent();
+        var parent = nodeManager.Find(ParentId);
+        var rightSibling = ((indexInParent + 1) < parent.ChildrenNodeCount) ? parent.GetChildNode(indexInParent + 1) : null;
+        if ((rightSibling != null) && (rightSibling.EntriesCount > nodeManager.MinEntriesPerNode))
+        {
+            // copy the corresponding right-entry in parent node and add it
+            entries.Add(parent.GetEntry(indexInParent));
+            // then make the right node the new parent entry
+            parent.entries[indexInParent] = rightSibling.Entries[0];
+            rightSibling.entries.RemoveAt(0);
+
+            if (rightSibling.IsLeaf == false)
+            {
+                // update the children of the moved node - the child node being moved will always be
+                // original parent node < X (child node being moved) < rightSibling[0]
+                var rightSiblingChild = nodeManager.Find(rightSibling.childrenIds[0]);
+                rightSiblingChild.parentId = this.id;
+                nodeManager.MarkAsChanged(rightSiblingChild);
+
+                // add the moved child node to current entries (since that is what's updating)
+                childrenIds.Add(rightSibling.childrenIds[0]);
+                rightSibling.childrenIds.RemoveAt(0);
+            }
+
+            nodeManager.MarkAsChanged(this);
+            nodeManager.MarkAsChanged(parent);
+            nodeManager.MarkAsChanged(rightSibling);
+            return;
+        }
+
+        // rotate from the left to the right child
+        var leftSibling = ((indexInParent - 1) < parent.ChildrenNodeCount) ? parent.GetChildNode(indexInParent - 1) : null;
+        if ((leftSibling != null) && (leftSibling.EntriesCount > nodeManager.MinEntriesPerNode))
+        {
+            entries.Insert(0, parent.GetEntry(indexInParent - 1));
+            // replaces the node with the leftSiblings replacement and removes it
+            parent.entries[indexInParent - 1] = leftSibling.Entries[leftSibling.entries.Count - 1];
+            leftSibling.entries.RemoveAt(leftSibling.entries.Count - 1);
+            // if left sibling has children, move its children to the current node
+            if (leftSibling.IsLeaf == false)
+            {
+                var leftSiblingChild = nodeManager.Find(leftSibling.ChildrenIds[leftSibling.childrenIds.Count - 1]);
+                leftSiblingChild.parentId = this.id;
+                nodeManager.MarkAsChanged(leftSiblingChild);
+
+                childrenIds.Insert(0, leftSibling.childrenIds[leftSibling.childrenIds.Count - 1]);
+                leftSiblingChild.childrenIds.RemoveAt(leftSibling.childrenIds.Count - 1);
+            }
+
+            nodeManager.MarkAsChanged(this);
+            nodeManager.MarkAsChanged(parent);
+            nodeManager.MarkAsChanged(leftSibling);
+            return;
+        }
+
+        // last situation where both siblings can't move
+        // merge the siblings together into a sibling sandwich
     }
 }
