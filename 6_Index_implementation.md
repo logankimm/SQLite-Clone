@@ -77,6 +77,9 @@ index?
 #### Protected Methods
 1. rebalance
     - indexInParent - 1 = index of the leftSibling
+    - Sibling sandwich
+        - If a rightSibling exists - merge the current node with the rightsibling
+        - Else - merge the current node with the left sibling
 
 graph TD
     subgraph Before Rotation

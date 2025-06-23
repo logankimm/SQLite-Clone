@@ -327,6 +327,51 @@ public class TreeNode<K, V>
         }
 
         // last situation where both siblings can't move
-        // merge the siblings together into a sibling sandwich
+        // merge the current node together with either rightSibling or leftSibling node
+        var leftChild = rightSibling != null ? this : leftSibling;
+        var rightChild = rightSibling != null ? rightSibling : this;
+        var separatorParentIndex = rightSibling != null ? indexInParent : (indexInParent - 1);
+
+        leftChild.entries.Add(parent.entries[separatorParentIndex]);
+        // combine all the values together into one node - then split afterwards
+        leftChild.entries.AddRange(rightChild.entries);
+        leftChild.childrenIds.AddRange(rightChild.childrenIds);
+
+        // update parentIds for the rightChild children
+        foreach (var id in rightChild.childrenIds)
+        {
+            // doesn't this set the parentId to itself? or am i crazy - it does but for children AHHHHH
+            var n = nodeManager.Find(id);
+            n.parentId = leftChild.id;
+            nodeManager.MarkAsChanged(n);
+        }
+
+        // update the parent node by removing the right node from entries and children
+        parent.entries.RemoveAt(separatorParentIndex);
+        parent.childrenIds.RemoveAt(separatorParentIndex + 1);
+        nodeManager.Delete(rightChild);
+
+        // case where the parent is the root and is not empty
+        if (parent.parentId == 0 && parent.EntriesCount == 0)
+        {
+            // delete the current parent node and set the merged node as the parent
+            leftChild.parentId = 0;
+            nodeManager.MarkAsChanged(leftChild);
+            nodeManager.MakeRoot(leftChild);
+            nodeManager.Delete(parent);
+            return;
+        }
+
+        // case where parent is NOT the root && is not empty but is missing minimum number of elements
+        if (parent.parentId != 0 && parent.EntriesCount < nodeManager.MinEntriesPerNode)
+        {
+            nodeManager.MarkAsChanged(leftChild);
+            nodeManager.MarkAsChanged(parent);
+            parent.Rebalance();
+            return;
+        }
+
+        nodeManager.MarkAsChanged(leftChild);
+        nodeManager.MarkAsChanged(parent);
     }
 }
