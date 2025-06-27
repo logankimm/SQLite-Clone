@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.VisualBasic;
 
 namespace DatabaseCore;
 
@@ -139,6 +140,9 @@ public class TreeNode<K, V>
         }
     }
 
+    /// <summary>
+    /// remove an entry from this node
+    /// </summary>
     public void Remove(int removeAt)
     {
         if (removeAt < 0 || removeAt >= this.entries.Count)
@@ -161,7 +165,26 @@ public class TreeNode<K, V>
             {
                 this.Rebalance();
             }
+
+            return;
         }
+
+        // case where the node is node is not a leaf
+        // replace data with largest in its left child subtree and delete the node
+        TreeNode<K, V> leftLargest; int leftLargestIndex;
+
+        var leftSubTree = nodeManager.Find(this.childrenIds[removeAt]);
+        // function uses find largest since the left subtree could have a right child that is greater
+        leftSubTree.FindLargest(out leftLargest, out leftLargestIndex);
+        var replacementEntry = leftLargest.GetEntry(leftLargestIndex);
+
+        // replace data
+        this.entries[removeAt] = replacementEntry;
+        nodeManager.MarkAsChanged(this);
+
+        // Remove it from the node we took it from
+        // don't need to call MarkAsChanged since that is done recursively
+        leftLargest.Remove(leftLargestIndex);
     }
 
     public void InsertAsLeaf(K key, V value, int insertPosition)
