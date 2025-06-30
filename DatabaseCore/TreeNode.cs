@@ -189,11 +189,16 @@ public class TreeNode<K, V>
 
     public void InsertAsLeaf(K key, V value, int insertPosition)
     {
+        Debug.Assert(IsLeaf, "Call InsertAsLeaf() on leaf only");
 
+        entries.Insert(insertPosition, new Tuple<K, V>(key, value));
+        nodeManager.MarkAsChanged(this);
     }
 
     public void InsertAsParent(K key, V value, uint leftReference, uint rightReference, out int insertPosition)
     {
+        Debug.Assert (IsLeaf == false, "Call InsertAsParent() on non-leaf only");
+
         insertPosition = 0;
         return;
     }
@@ -206,11 +211,17 @@ public class TreeNode<K, V>
     // Search Operations
     public int BinarySearchEntriesForKey(K key)
     {
-        return 0;
+        return entries.BinarySearch(new Tuple<K, V>(key, default(V)), this.nodeManager.EntryComparer);
     }
     public int BinarySearchEntriesForKey(K key, bool firstOccurence)
     {
-
+        // return first instance of the found entry
+        if (firstOccurence)
+        {
+            return entries.BinarySearchFirst(new Tuple<K, V>(key, default(V)), this.nodeManager.EntryComparer);
+        }
+        // return last instance of the found entry
+       return entries.BinarySearchLast(new Tuple<K, V>(key, default(V)), this.nodeManager.EntryComparer);
     }
 
     /// <summary>
