@@ -197,10 +197,19 @@ public class TreeNode<K, V>
 
     public void InsertAsParent(K key, V value, uint leftReference, uint rightReference, out int insertPosition)
     {
-        Debug.Assert (IsLeaf == false, "Call InsertAsParent() on non-leaf only");
+        Debug.Assert(IsLeaf == false, "Call InsertAsParent() on non-leaf only");
 
-        insertPosition = 0;
-        return;
+        insertPosition = BinarySearchEntriesForKey(key);
+        // convert -1's into 0 if entry not found
+        insertPosition = insertPosition >= 0 ? insertPosition : ~insertPosition;
+
+        entries.Insert(insertPosition, new Tuple<K, V>(key, value));
+
+        // update children nodes - not sure why this is necessary right now
+        childrenIds.Insert(insertPosition, leftReference);
+        childrenIds[insertPosition + 1] = rightReference;
+
+        nodeManager.MarkAsChanged(this);
     }
 
     public void Split(out TreeNode<K, V> outLeftNode, out TreeNode<K, V> outRightNode)
