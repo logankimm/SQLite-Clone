@@ -4,6 +4,16 @@ namespace DatabaseCore;
 
 static class TreeHelper
 {
+    /// <summary>
+    /// Removes from a List from an index onwards
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="target"></param>
+    /// <param name="fromIndex"></param>
+    public static void RemoveRange<T>(this List<T> target, int fromIndex)
+    {
+        target.RemoveRange(fromIndex, target.Count - fromIndex);
+    }
     public static int BinarySearchFirst<T>(this List<T> array, T value, IComparer<T> comparer)
     {
         if (comparer == null)

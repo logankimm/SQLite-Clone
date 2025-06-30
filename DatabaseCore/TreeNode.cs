@@ -212,9 +212,83 @@ public class TreeNode<K, V>
         nodeManager.MarkAsChanged(this);
     }
 
+    /// <summary>
+    /// Splitting the node in half
+    /// </summary>
     public void Split(out TreeNode<K, V> outLeftNode, out TreeNode<K, V> outRightNode)
     {
+        Debug.Assert(IsOverflow, "Calling Split when node is not overflow");
 
+        var halfCount = this.nodeManager.MinEntriesPerNode;
+        var middleEntry = entries[halfCount];
+
+        // create a new node that contains entries greater than the middle
+        var rightEntries = new Tuple<K, V>[halfCount];
+        // children is defined this way for efficiency since a leaf node will always have 0 children
+        var rightChildren = (uint[])null;
+
+        entries.CopyTo(halfCount + 1, rightEntries, 0, halfCount);
+        if (IsLeaf == false)
+        {
+            rightChildren = new uint[halfCount + 1];
+            childrenIds.CopyTo(halfCount + 1, rightChildren, 0, rightChildren.Length);
+        }
+
+        var newRightNode = nodeManager.Create(rightEntries, rightChildren);
+
+        // remove right entries from current node
+        entries.RemoveRange(halfCount);
+
+        if (IsLeaf == false)
+        {
+            // update parent nodes for newly created right node
+            foreach (var childId in rightChildren)
+            {
+                nodeManager.Find(childId).ParentId = newRightNode.Id;
+            }
+
+            // remove children from this node
+            childrenIds.RemoveRange(halfCount + 1);
+        }
+
+        var parent = parentId == 0 ? null : nodeManager.Find(parentId);
+
+        if (parent == null)
+        {
+            parent = this.nodeManager.CreateNewRoot(
+                middleEntry.Item1,
+                middleEntry.Item2,
+                this.Id,
+                newRightNode.Id
+            );
+            this.ParentId = parent.Id;
+            newRightNode.ParentId = parent.Id;
+        }
+        else
+        {
+            int insertPosition;
+            parent.InsertAsParent(
+                middleEntry.Item1,
+                middleEntry.Item2,
+                this.Id,
+                newRightNode.Id,
+                out insertPosition
+            );
+            newRightNode.ParentId = parent.Id;
+
+            // check if parent is now overflow and split if necessary
+            if (parent.IsOverflow)
+            {
+                TreeNode<K, V> left, right;
+                parent.Split (out left, out right);
+            }
+        }
+        // Output the node that 
+        outLeftNode = this;
+        outRightNode = newRightNode;
+
+        // Mark this node as changed
+        nodeManager.MarkAsChanged (this);
     }
 
     // Search Operations
