@@ -21,10 +21,10 @@ public class Tree<K, V> : IIndex<K, V>
 
     public void Insert(K key, V value)
     {
-
+        // find index for insertion
     }
 
-    public tuple<K, V> Get(K key)
+    public Tuple<K, V> Get(K key)
     {
 
     }
@@ -48,6 +48,26 @@ public class Tree<K, V> : IIndex<K, V>
             throw new InvalidOperationException("This method should be called only from unique tree");
         }
 
+
+    }
+
+    public IEnumerable<Tuple<K, V>> LargerThanOrEqualTo(K key)
+    {
+
+    }
+
+    public IEnumerable<Tuple<K, V>> LargerThan(K key)
+    {
+
+    }
+
+    public IEnumerable<Tuple<K, V>> LessThanOrEqualTo(K key)
+    {
+
+    }
+
+    public IEnumerable<Tuple<K, V>> LessThan(K key)
+    {
 
     }
 }

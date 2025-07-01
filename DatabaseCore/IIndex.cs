@@ -8,11 +8,11 @@ public interface IIndex<K, V>
     /// <param name="key">Key.</param>
     /// <param name="value">Value.</param>
     void Insert(K key, V value);
-    tuple<K, V> Get(K key);
+    Tuple<K, V> Get(K key);
     /// <summary>
     /// Find all entries that contain a key larger than or equal to specified key
     /// </summary>
-    IEnumerable<tuple<K, V>> LargerThanOrEqualTo(K key);
+    IEnumerable<Tuple<K, V>> LargerThanOrEqualTo(K key);
     /// <summary>
     /// Find all entries that contain a key larger than specified key
     /// </summary>
