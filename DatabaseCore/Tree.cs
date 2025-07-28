@@ -2,6 +2,7 @@ using System;
 using log4net;
 using System.Collections.Generic;
 using System.Numerics;
+using log4net.Filter;
 
 namespace DatabaseCore;
 
@@ -44,7 +45,13 @@ public class Tree<K, V> : IIndex<K, V>
 
     public Tuple<K, V> Get(K key)
     {
-
+        var insertionIndex = 0;
+        var node = FindNodeForInsertion(key, ref insertionIndex);
+        if (insertionIndex < 0)
+        {
+            return null;
+        }
+        return node.GetEntry(insertionIndex);
     }
 
     /// <summary>
@@ -76,7 +83,15 @@ public class Tree<K, V> : IIndex<K, V>
 
     public IEnumerable<Tuple<K, V>> LargerThan(K key)
     {
+        var startIterationIndex = 0;
+        var node = FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
 
+        return new TreeTraverser<K, V> (
+            nodeManager,
+            node,
+            (startIterationIndex >= 0 ? startIterationIndex : (~startIterationIndex - 1)),
+            TreeTraverseDirection.Decending
+        );
     }
 
     public IEnumerable<Tuple<K, V>> LessThanOrEqualTo(K key)
@@ -89,6 +104,44 @@ public class Tree<K, V> : IIndex<K, V>
 
     }
 
+    /// <summary>
+    /// recursive function similar to FindNodeForInseration but for duplicate keys
+    /// </summary>
+    /// <param name="moveLeft">Decide whether to move left or right for duplicate keys</param>
+    /// <returns></returns>
+    private TreeNode<K, V> FindNodeForIteration(K key, TreeNode<K, V> node, bool moveLeft, ref int startIterationIndex)
+    {
+        // base case where node is empty (think only for parent root node)
+        if (node.IsEmpty)
+        {
+            startIterationIndex = ~0;
+            return node;
+        }
+
+        var binarySearchResult = node.BinarySearchEntriesForKey(key, moveLeft);
+
+        // case where exact match for entry is found
+        if (binarySearchResult >= 0)
+        {
+            // check if node is a leaf node and return found index
+            if (node.IsLeaf)
+            {
+                startIterationIndex = binarySearchResult;
+                return node;
+            }
+
+            return FindNodeForIteration(key, node.GetChildNode(moveLeft ? binarySearchResult : binarySearchResult + 1), moveLeft, ref startIterationIndex);
+        }
+        // keep searching if exact match is not fund
+        if (node.IsLeaf == false)
+        {
+            return FindNodeForIteration(key, node.GetChildNode(~binarySearchResult), moveLeft, ref startIterationIndex);
+        }
+        // last case this is a leaf node and no valid entries are found, return this and bitwise complement
+        startIterationIndex = binarySearchResult;
+        return node;
+    }
+    
     ///
     /// Private Methods
     /// 
