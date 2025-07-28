@@ -162,4 +162,13 @@ public class TreeEnumerator<K, V> : IEnumerator<Tuple<K, V>>
         current = currentNode.GetEntry(currentEntry);
         return true;
     }
+    public void Reset()
+    {
+        throw new NotSupportedException ();
+    }
+
+    public void Dispose()
+    {
+        // dispose my ass
+    }
 }
