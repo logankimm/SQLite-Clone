@@ -1,8 +1,6 @@
 using System;
-using log4net;
+using System.Collections;
 using System.Collections.Generic;
-using System.Numerics;
-using log4net.Config;
 
 namespace DatabaseCore;
 
@@ -20,10 +18,7 @@ public class TreeTraverser<K, V> : IEnumerable<Tuple<K, V>>
         TreeTraverseDirection direction
     )
     {
-        if (fromNode == null)
-        {
-            throw new ArgumentNullException("fromNode");
-        }
+        ArgumentNullException.ThrowIfNull(fromNode, nameof(fromNode));
 
         this.direction = direction;
         this.fromIndex = fromIndex;
@@ -34,5 +29,10 @@ public class TreeTraverser<K, V> : IEnumerable<Tuple<K, V>>
     IEnumerator<Tuple<K, V>> IEnumerable<Tuple<K, V>>.GetEnumerator()
     {
         return new TreeEnumerator<K, V>(nodeManager, fromNode, fromIndex, direction);
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable<Tuple<K, V>>)this).GetEnumerator();
     }
 }
