@@ -55,16 +55,68 @@ public class Tree<K, V> : IIndex<K, V>
     }
 
     /// <summary>
-    /// Delete specified entry
+    /// Delete all instances of a specified entry of a key
     /// </summary>
     public bool Delete(K key, V value, IComparer<V> valueComparer = null)
     {
+        if (allowDuplicateKeys == true)
+        {
+            throw new InvalidOperationException("This method should be called only from unique tree");
+        }
 
+        valueComparer = valueComparer == null ? Comparer<V>.Default : valueComparer;
+
+        var deleted = false;
+        var shouldContinue = true;
+
+        try
+        {
+            while (shouldContinue)
+            {
+                // recreate a new enumerator each time in case tree rebalances
+                using var enumerator = (TreeEnumerator<K, V>)LargerThanOrEqualTo(key).GetEnumerator();
+                {
+                    while (true)
+                    {
+                        if (enumerator.MoveNext() == false)
+                        {
+                            shouldContinue = false;
+                            break;
+                        }
+
+                        var entry = enumerator.Current;
+
+                        // stop searching after finding non-equal element
+                        if (nodeManager.KeyComparer.Compare(entry.Item1, key) == 0)
+                        {
+                            shouldContinue = false;
+                            break;
+                        }
+
+                        // case of match
+                        if (valueComparer.Compare(entry.Item2, value) == 0)
+                        {
+                            enumerator.CurrentNode.Remove(enumerator.CurrentEntry);
+                            deleted = true;
+                            break;
+                        }
+                    }
+                }   
+            }
+        }
+        catch (EndEnumeratingException)
+        {
+
+        }
+
+        nodeManager.SaveChanges ();
+        return deleted;
     }
 
+    private class EndEnumeratingException : Exception { }
+
     /// <summary>
-    /// Delete all entires of a specific key
-    /// This can only be called when it is a unique tree || allowDuplicateKeys = false
+    /// Delete a specified entry of a specific key
     /// </summary>
     public bool Delete(K key)
     {
@@ -73,7 +125,17 @@ public class Tree<K, V> : IIndex<K, V>
             throw new InvalidOperationException("This method should be called only from unique tree");
         }
 
+        using var enumerator = (TreeEnumerator<K, V>)LargerThanOrEqualTo(key).GetEnumerator();
+        {
+            // MoveNext returns true if a match has been found
+            if (enumerator.MoveNext() && (nodeManager.KeyComparer.Compare(enumerator.Current.Item1, key) == 0))
+            {
+                enumerator.CurrentNode.Remove(enumerator.CurrentEntry);
+                return true;
+            }
+        }
 
+        return false;
     }
 
     public IEnumerable<Tuple<K, V>> LargerThanOrEqualTo(K key)
