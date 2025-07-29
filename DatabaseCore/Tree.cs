@@ -87,7 +87,7 @@ public class Tree<K, V> : IIndex<K, V>
                         var entry = enumerator.Current;
 
                         // stop searching after finding non-equal element
-                        if (nodeManager.KeyComparer.Compare(entry.Item1, key) == 0)
+                        if (nodeManager.KeyComparer.Compare(entry.Item1, key) > 0)
                         {
                             shouldContinue = false;
                             break;
