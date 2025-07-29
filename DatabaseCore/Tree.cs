@@ -78,30 +78,54 @@ public class Tree<K, V> : IIndex<K, V>
 
     public IEnumerable<Tuple<K, V>> LargerThanOrEqualTo(K key)
     {
+        var startIterationIndex = 0;
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, true, ref startIterationIndex);
 
+        return new TreeTraverser<K, V> (
+            nodeManager,
+            node,
+            (startIterationIndex >= 0 ? startIterationIndex : ~startIterationIndex) - 1,
+            TreeTraverseDirection.Ascending
+        );
     }
 
     public IEnumerable<Tuple<K, V>> LargerThan(K key)
     {
         var startIterationIndex = 0;
-        var node = FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
 
         return new TreeTraverser<K, V> (
             nodeManager,
             node,
-            (startIterationIndex >= 0 ? startIterationIndex : (~startIterationIndex - 1)),
-            TreeTraverseDirection.Decending
+            startIterationIndex >= 0 ? startIterationIndex : (~startIterationIndex - 1),
+            TreeTraverseDirection.Ascending
         );
     }
 
     public IEnumerable<Tuple<K, V>> LessThanOrEqualTo(K key)
     {
+        var startIterationIndex = 0;
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
 
+        return new TreeTraverser<K, V> (
+            nodeManager,
+            node,
+            startIterationIndex >= 0 ? startIterationIndex + 1 : ~startIterationIndex,
+            TreeTraverseDirection.Decending
+        );
     }
 
     public IEnumerable<Tuple<K, V>> LessThan(K key)
     {
+        var startIterationIndex = 0;
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
 
+        return new TreeTraverser<K, V> (
+            nodeManager,
+            node,
+            startIterationIndex >= 0 ? startIterationIndex : ~startIterationIndex,
+            TreeTraverseDirection.Decending
+        );
     }
 
     /// <summary>
