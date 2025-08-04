@@ -7,7 +7,7 @@ public interface IRecordStorage
     /// <summary>
     /// Grab a record's data
     /// </summary>
-    byte[] Find(byte[] recordId);
+    byte[] Find(uint recordId);
 
     /// <summary>
     // Create a new empty record and returns an id

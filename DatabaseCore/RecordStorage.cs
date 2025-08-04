@@ -37,7 +37,7 @@ public class RecordStorage : IRecordStorage
     //
     // Public Methods
     //
-    public virtual byte[] Find(byte[] recordId)
+    public virtual byte[] Find(uint recordId)
     {
         // go to block number
         // using ensures the block is properly diposed of after use
@@ -59,15 +59,15 @@ public class RecordStorage : IRecordStorage
 
             // potential error checking in case information is too large?
             var recordSize = block.GetHeader(kRecordLength);
-            if (recordSize > this.MaxRecordSize)
+            if (recordSize > MaxRecordSize)
             {
                 throw new NotSupportedException("Unexpected record length: " + recordSize);
             }
 
             var data = new byte[recordSize];
             var bytesRead = 0;
-            Iblock currBlock = block;
 
+            IBlock currBlock = block;
             // read data from the block
             while (bytesRead < recordSize)
             {
@@ -83,9 +83,9 @@ public class RecordStorage : IRecordStorage
 
                     // read this many blocks
                     currBlock.Read(
-                        dst: data,
-                        dstOffSet: bytesRead,
-                        srcOffSet: this.storage.BlockHeaderSize,
+                        dest: data,
+                        dstOffset: bytesRead,
+                        srcOffset: this.storage.BlockHeaderSize,
                         count: (int)currBlockSize);
 
                     bytesRead += (int)currBlockSize;
@@ -154,19 +154,19 @@ public class RecordStorage : IRecordStorage
             }
 
             // continue writing the rest of the data
-            Iblock currBlock = firstBlock;
+            IBlock currBlock = firstBlock;
             while (dataWritten < dataToWrite)
             {
                 // assigned outside of using so that it isn't disposed of 
-                Iblock nextBlock = null;
+                IBlock nextBlock = null;
 
                 using (currBlock)
                 {
                     var writeLength = (int)Math.Min(this.storage.BlockContentSize, dataToWrite - dataWritten);
                     currBlock.Write(
                         src: data,
-                        srcOffSet: dataWritten,
-                        dstOffSet: 0,
+                        srcOffset: dataWritten,
+                        dstOffset: 0,
                         count: writeLength
                     );
                     currBlock.SetHeader(kBlockContentLength, writeLength);
@@ -189,7 +189,7 @@ public class RecordStorage : IRecordStorage
                         {
                             if ((success == false) && (nextBlock != null))
                             {
-                                nextBlock.Dipose();
+                                nextBlock.Dispose();
                                 nextBlock = null;
                             }
                         }
@@ -218,12 +218,12 @@ public class RecordStorage : IRecordStorage
             IBlock currBlock = block;
             while (true)
             {
-                Iblock nextBlock = null;
+                IBlock nextBlock = null;
 
                 using (currBlock)
                 {
                     // delete the current block,
-                    this.MarkAsFree(currBlock.id);
+                    this.MarkAsFree(currBlock.Id);
 
                     // rewrite next block length and delete data
                     currBlock.SetHeader(kIsDeleted, 1L);
@@ -263,11 +263,11 @@ public class RecordStorage : IRecordStorage
 
         try
         {
-            while (written < total)
+            while (dataWritten < total)
             {
                 var writeLength = Math.Min(total - dataWritten, this.storage.BlockContentSize);
                 // i don't think casting as double is necessary and only needs to be an int im p sure
-                var blockIndex = (int)Math.Floor((double)dataWritten / (double)this.storage.blockContentSize);
+                var blockIndex = (int)Math.Floor((double)dataWritten / (double)this.storage.BlockContentSize);
 
                 // find the write block to write to
                 IBlock currBlock = null;
@@ -283,7 +283,7 @@ public class RecordStorage : IRecordStorage
                     {
                         throw new Exception("Failed to allocate new block");
                     }
-                    blocks.Add(newBlock);
+                    blocks.Add(currBlock);
                 }
 
                 if (prevBlock != null)
@@ -295,8 +295,8 @@ public class RecordStorage : IRecordStorage
                 // write to the block
                 currBlock.Write(
                     src: data,
-                    srcOffSet: dataWritten,
-                    dstOffSet: 0,
+                    srcOffset: dataWritten,
+                    dstOffset: 0,
                     count: writeLength
                 );
                 currBlock.SetHeader(kBlockContentLength, writeLength);
@@ -340,10 +340,10 @@ public class RecordStorage : IRecordStorage
     /// or creating a new one
     /// </summary>
     /// <returns>Newly allocated block ready to use.</returns>
-    private Iblock AllocateBlock()
+    private IBlock AllocateBlock()
     {
         uint reusableBlockId;
-        Iblock newBlock;
+        IBlock newBlock;
 
         if (this.TryFindFreeBlock(out reusableBlockId) == false)
         {
@@ -352,7 +352,7 @@ public class RecordStorage : IRecordStorage
 
             if (newBlock == null)
             {
-                throw new InvalidDataException("Block not found by id: " + resuableBlockId);
+                throw new InvalidDataException("Block not found by id: " + reusableBlockId);
             }
         }
         else
@@ -361,7 +361,7 @@ public class RecordStorage : IRecordStorage
 
             if (newBlock == null)
             {
-                throw new InvalidDataException("Block not found by id: " + resuableBlockId);
+                throw new InvalidDataException("Block not found by id: " + reusableBlockId);
             }
 
             // Update header fields for error checking - not sure if this is necessary
@@ -372,13 +372,13 @@ public class RecordStorage : IRecordStorage
             newBlock.SetHeader(kIsDeleted, 0L);
         }
 
-        return newBlock
+        return newBlock;
     }
 
     private bool TryFindFreeBlock(out uint blockId)
     {
         blockId = 0;
-        Iblock = lastBlock, secondLastBlock;
+        IBlock lastBlock, secondLastBlock;
         this.GetSpaceTrackingBlock(out lastBlock, out secondLastBlock);
 
         using (lastBlock)
@@ -401,7 +401,7 @@ public class RecordStorage : IRecordStorage
                 secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) - 4);
 
                 // lastBlock is now empty, so it is added to secondLastBlock as the next available block to be used/can be used
-                this.AppendUint32ToContent(secondLastBlock, lastBlock.id);
+                this.AppendUint32ToContent(secondLastBlock, lastBlock.Id);
 
                 // update headers accordingly
                 secondLastBlock.SetHeader(kBlockContentLength, secondLastBlock.GetHeader(kBlockContentLength) + 4);
@@ -453,7 +453,7 @@ public class RecordStorage : IRecordStorage
                     throw new Exception("Block not found and should be deleted: " + currBlockId);
                 }
 
-                currBlockId = currBlock.GetHeader(kNextBlockId);
+                currBlockId = (uint)currBlock.GetHeader(kNextBlockId);
             } while (currBlockId != 0);
 
             success = true;
@@ -466,7 +466,7 @@ public class RecordStorage : IRecordStorage
             {
                 foreach (var block in blocks)
                 {
-                    block.Dipose();
+                    block.Dispose();
                 }
             }
         }
@@ -493,7 +493,7 @@ public class RecordStorage : IRecordStorage
             lastBlock = blocks[blocks.Count - 1];
             if (blocks.Count > 1)
             {
-                secondLastBlock = blocks[blocks.Count - 2]
+                secondLastBlock = blocks[blocks.Count - 2];
             }
         }
         finally
@@ -527,8 +527,8 @@ public class RecordStorage : IRecordStorage
 
         block.Write(
             src: LittleEndianByteOrder.GetBytes(value),
-            srcOffSet: 0,
-            dstOffSet: (int)contentLength,
+            srcOffset: 0,
+            dstOffset: (int)contentLength,
             count: 4
         );
     }
@@ -553,9 +553,9 @@ public class RecordStorage : IRecordStorage
 
         // read the data from the bytes of the blockcontent - reading doesn't delete the content/pop/update it - just writes it to a buffer?
         block.Read(
-            dst: buffer,
-            dstOffSet: 0,
-            srcOffSet: (int)contentLength - 4,
+            dest: buffer,
+            dstOffset: 0,
+            srcOffset: (int)contentLength - 4,
             count: 4
         );
         return LittleEndianByteOrder.GetUInt32(buffer);
