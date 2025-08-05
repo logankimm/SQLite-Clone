@@ -82,7 +82,7 @@ public class ChampSerializer
         return champData;
     }
 
-    public ChampModel Deserialize(byte[] data)
+    public ChampModel Deserializer(byte[] data)
     {
         var champModel = new ChampModel();
 
