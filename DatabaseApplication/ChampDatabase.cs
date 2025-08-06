@@ -48,7 +48,30 @@ public class ChampDatabase : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, "ChampDatabase");
 
-        throw new NotImplementedException();
+        // Find the original cow to get its old secondary key
+        var Champ = Find(champ.Id);
+        if (Champ == null) {
+            throw new InvalidOperationException("Champ not found, cannot update.");
+        }
+
+        // Find the record ID using the primary index
+        var entry = this.primaryIndex.Get(champ.Id);
+        if (entry == null) {
+            // This case should theoretically not be reached if Champ was found, but it's good practice
+            throw new InvalidOperationException("Champ record not found in primary index.");
+        }
+        var recordId = entry.Item2;
+
+        // 1. Delete the old secondary index entry
+        var oldSecondaryKey = new Tuple<string, int>(Champ.Name, Champ.Set);
+        this.secondaryIndex.Delete(oldSecondaryKey, recordId);
+
+        // 2. Update the actual cow record in the main database file
+        this.champRecords.Update(recordId, this.champSerializer.Serialize(champ));
+
+        // 3. Insert the new secondary index entry
+        var newSecondaryKey = new Tuple<string, int>(champ.Name, champ.Set);
+        this.secondaryIndex.Insert(newSecondaryKey, recordId);
     }
 
     public void Insert(ChampModel champ)
@@ -57,7 +80,7 @@ public class ChampDatabase : IDisposable
 
         var recordId = this.champRecords.Create(this.champSerializer.Serialize(champ));
         this.primaryIndex.Insert(champ.Id, recordId);
-        this.secondaryIndex.Insert(new Tuple<string, int>(champ.Name, champ.Cost), recordId);
+        this.secondaryIndex.Insert(new Tuple<string, int>(champ.Name, champ.Set), recordId);
     }
 
     public ChampModel Find(Guid champId)
@@ -73,10 +96,10 @@ public class ChampDatabase : IDisposable
         return this.champSerializer.Deserializer(this.champRecords.Find(entry.Item2));
     }
 
-    public IEnumerable<ChampModel> FindBy(string name, int cost)
+    public IEnumerable<ChampModel> FindBy(string name, int set)
     {
         var comparer = Comparer<Tuple<string, int>>.Default;
-        var searchKey = new Tuple<string, int>(name, cost);
+        var searchKey = new Tuple<string, int>(name, set);
 
         foreach (var entry in this.secondaryIndex.LargerThanOrEqualTo(searchKey))
         {
@@ -92,7 +115,26 @@ public class ChampDatabase : IDisposable
 
     public void Delete (ChampModel champ)
     {
-        throw new NotImplementedException ();
+        ObjectDisposedException.ThrowIf(disposed, "ChampDatabase");
+
+        // Find the record ID from the primary index
+        var entry = this.primaryIndex.Get(champ.Id);
+        if (entry == null) {
+            // Cow doesn't exist, so nothing to delete
+            return;
+        }
+        var recordId = entry.Item2;
+
+        // 1. Delete from primary index
+        this.primaryIndex.Delete(champ.Id);
+
+        // 2. Delete from secondary index
+        // Note: The secondary index allows duplicates, so we need to provide the key and value to delete the specific entry
+        var secondaryKey = new Tuple<string, int>(champ.Name, champ.Set);
+        this.secondaryIndex.Delete(secondaryKey, recordId);
+
+        // 3. Delete the actual record
+        this.champRecords.Delete(recordId);
     }
     
     #region Dispose
