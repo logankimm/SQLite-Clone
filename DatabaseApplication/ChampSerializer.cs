@@ -14,7 +14,7 @@ public class ChampSerializer
             classBytes.Length +    // n bytes for breed string
             4 +                    // 4 bytes indicate the length of the `name` string
             nameBytes.Length +     // z bytes for name 
-            4 +                    // 4 bytes for Cost
+            4 +                    // 4 bytes for Set
             4 +                    // 4 bytes indicate length of DNA data
             champ.UnitData.Length  // y bytes of DNA data
         ];
@@ -53,9 +53,9 @@ public class ChampSerializer
             count: nameBytes.Length
         );
 
-        // Cost
+        // Set
         Buffer.BlockCopy (
-            src: LittleEndianByteOrder.GetBytes((int)champ.Cost), 
+            src: LittleEndianByteOrder.GetBytes((int)champ.Set), 
             srcOffset: 0, 
             dst: champData, 
             dstOffset: 16 + 4 + classBytes.Length + 4 + nameBytes.Length, 
@@ -104,8 +104,8 @@ public class ChampSerializer
         }
         champModel.Class = System.Text.Encoding.UTF8.GetString(data, 16 + 4 + nameLength + 4, classLength);
 
-        // cost
-        champModel.Cost = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4 + classLength);
+        // set
+        champModel.Set = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4 + classLength);
 
         // unit data
         var unitDataLength = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4 + classLength + 4);

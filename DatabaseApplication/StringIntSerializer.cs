@@ -43,11 +43,13 @@ public class StringIntSerializer : ISerializer<Tuple<string, int>>
 
     public Tuple<string, int> Deserialize(byte[] buffer, int offset, int length)
     {
-        if (length != 4)
+        var stringLength = BufferHelper.ReadBufferInt32 (buffer, offset);
+        if (stringLength < 0 || stringLength > (16 * 1024))
         {
-            throw new ArgumentException ("Invalid length: " + length);
+            throw new Exception ("Invalid string length: " + stringLength);
         }
-
-        return BufferHelper.ReadBufferInt32(buffer, offset);
+        var stringValue = System.Text.Encoding.UTF8.GetString (buffer, offset + 4, stringLength);
+        var integerValue = BufferHelper.ReadBufferInt32 (buffer, offset + 4 + stringLength);
+        return new Tuple<string, int>(stringValue, integerValue);
     }
 }
