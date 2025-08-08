@@ -28,7 +28,7 @@ public class BlockStorage : IBlockStorage
     {
         get
         {
-            return unitOfWork;
+            return blockSize;
         }
     }
 
@@ -47,7 +47,7 @@ public class BlockStorage : IBlockStorage
             return blockContentSize;
         }
     }
-    public BlockStorage(Stream storage, int blockSize = 4096, int blockHeaderSize = 48)
+    public BlockStorage(Stream storage, int blockSize = 40960, int blockHeaderSize = 48)
     {
         if (storage == null)
             throw new ArgumentNullException("no storage/data stream attached");
@@ -88,7 +88,7 @@ public class BlockStorage : IBlockStorage
             return null;
         }
 
-        // Now that you know it exists read through the stream and return the block - stream position will always match blockId? - how does deletion work
+        // Now that you know it can exist, read through the stream and return the block - stream position will always match blockId? - how does deletion work
         var firstSector = new byte[DiskSectorSize];
         stream.Position = blockId * blockSize;
         stream.Read(firstSector, 0, DiskSectorSize);
@@ -109,6 +109,7 @@ public class BlockStorage : IBlockStorage
 
         // Calculate position for new blockId (next available block)
         var blockId = (uint)(this.stream.Length / blockSize);
+        // var blockId = (uint)Math.Ceiling ((double)this.stream.Length / (double)blockSize);
 
         // Extend length of underlying stream
         this.stream.SetLength((long)((blockId * blockSize) + blockSize));

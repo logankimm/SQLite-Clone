@@ -31,11 +31,9 @@ public class Block : IBlock
     public Block(BlockStorage storage, uint id, byte[] firstSector, Stream stream)
     {
         // Error handling for bad inputs
-        if (stream == null)
-            throw new ArgumentNullException("stream");
+        ArgumentNullException.ThrowIfNull(stream, nameof(stream));
 
-        if (firstSector == null)
-            throw new ArgumentNullException("firstSector");
+        ArgumentNullException.ThrowIfNull(firstSector, nameof(firstSector));
 
         if (firstSector.Length != storage.DiskSectorSize)
             throw new ArgumentException("firstSector length must be " + storage.DiskSectorSize);
