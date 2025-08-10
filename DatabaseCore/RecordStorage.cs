@@ -520,7 +520,7 @@ public class RecordStorage : IRecordStorage
     {
         var contentLength = block.GetHeader(kBlockContentLength);
 
-        if (contentLength % 4 == 0)
+        if (contentLength % 4 != 0)
         {
             throw new DataMisalignedException("Block content length not %4: " + contentLength);
         }
@@ -581,10 +581,12 @@ public class RecordStorage : IRecordStorage
                 else
                 {
                     // change secondLastBlock to lastBlock
-                    targetBlock = AllocateBlock();
+                    targetBlock = this.storage.CreateNew();
+                    targetBlock.SetHeader(kPreviousBlockId, lastBlock.Id);
                     
                     lastBlock.SetHeader(kNextBlockId, targetBlock.Id);
-                    targetBlock.SetHeader(kPreviousBlockId, lastBlock.Id);
+
+                    recordLength = 0;
                 }
 
                 // add the blockId to the record keeper
