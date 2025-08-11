@@ -54,7 +54,7 @@ public class TreeEnumerator<K, V> : IEnumerator<Tuple<K, V>>
         this.direction = direction;
         this.currentNode = node;
         this.currentEntry = fromIndex;
-        this.nodeManager = nodeManager; 
+        this.nodeManager = nodeManager;
     }
 
     public bool MoveNext()
@@ -70,7 +70,7 @@ public class TreeEnumerator<K, V> : IEnumerator<Tuple<K, V>>
             case TreeTraverseDirection.Decending:
                 return MoveBackward();
             default:
-                throw new ArgumentOutOfRangeException ();
+                throw new ArgumentOutOfRangeException();
         }
     }
 
@@ -102,9 +102,12 @@ public class TreeEnumerator<K, V> : IEnumerator<Tuple<K, V>>
                         throw new Exception ("Something gone wrong with the BTree");
                     }
                 }
-                current = null;
-                doneIterating = true;
-                return false;
+                else
+                {
+                    current = null;
+                    doneIterating = true;
+                    return false;
+                }
             }
         }
         // otherwise instance of parent node? (why couldn't this be middle nodes?)
@@ -141,9 +144,12 @@ public class TreeEnumerator<K, V> : IEnumerator<Tuple<K, V>>
                         throw new Exception ("Something gone wrong with the BTree");
                     }
                 }
-                current = null;
-                doneIterating = true;
-                return false;
+                else
+                {
+                    current = null;
+                    doneIterating = true;
+                    return false;
+                }
             }
         }
 

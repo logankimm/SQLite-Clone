@@ -23,7 +23,7 @@ public class TreeTraverser<K, V> : IEnumerable<Tuple<K, V>>
         this.direction = direction;
         this.fromIndex = fromIndex;
         this.fromNode = fromNode;
-        this.nodeManager = nodeManager; 
+        this.nodeManager = nodeManager;
     }
 
     IEnumerator<Tuple<K, V>> IEnumerable<Tuple<K, V>>.GetEnumerator()

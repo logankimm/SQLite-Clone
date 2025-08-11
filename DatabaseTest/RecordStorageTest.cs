@@ -194,7 +194,7 @@ public class RecordStorageTest
             if (File.Exists(tmp))
             {
                 File.Delete(tmp);
-                Console.WriteLine ("Deleted: " + tmp);
+                // Console.WriteLine ("Deleted: " + tmp);
             }
         }
     }

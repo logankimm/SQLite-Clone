@@ -180,7 +180,7 @@ public class Tree<K, V> : IIndex<K, V>
     public IEnumerable<Tuple<K, V>> LessThan(K key)
     {
         var startIterationIndex = 0;
-        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, true, ref startIterationIndex);
 
         return new TreeTraverser<K, V> (
             nodeManager,
