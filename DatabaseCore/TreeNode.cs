@@ -389,6 +389,7 @@ public class TreeNode<K, V>
     {
         // check if the right sibling exists and add a node to the left child
         var indexInParent = IndexInParent();
+        // Console.WriteLine($"index in parent {indexInParent} and index {this.id}");
         var parent = nodeManager.Find(ParentId);
         var rightSibling = ((indexInParent + 1) < parent.ChildrenNodeCount) ? parent.GetChildNode(indexInParent + 1) : null;
         if ((rightSibling != null) && (rightSibling.EntriesCount > nodeManager.MinEntriesPerNode))
@@ -419,7 +420,7 @@ public class TreeNode<K, V>
         }
 
         // rotate from the left to the right child
-        var leftSibling = ((indexInParent - 1) < parent.ChildrenNodeCount) ? parent.GetChildNode(indexInParent - 1) : null;
+        var leftSibling = ((indexInParent - 1) >= 0) ? parent.GetChildNode(indexInParent - 1) : null;
         if ((leftSibling != null) && (leftSibling.EntriesCount > nodeManager.MinEntriesPerNode))
         {
             entries.Insert(0, parent.GetEntry(indexInParent - 1));
@@ -427,14 +428,14 @@ public class TreeNode<K, V>
             parent.entries[indexInParent - 1] = leftSibling.Entries[leftSibling.entries.Count - 1];
             leftSibling.entries.RemoveAt(leftSibling.entries.Count - 1);
             // if left sibling has children, move its children to the current node
-            if (leftSibling.IsLeaf == false)
+            if (IsLeaf == false)
             {
                 var leftSiblingChild = nodeManager.Find(leftSibling.ChildrenIds[leftSibling.childrenIds.Count - 1]);
                 leftSiblingChild.parentId = this.id;
                 nodeManager.MarkAsChanged(leftSiblingChild);
 
                 childrenIds.Insert(0, leftSibling.childrenIds[leftSibling.childrenIds.Count - 1]);
-                leftSiblingChild.childrenIds.RemoveAt(leftSibling.childrenIds.Count - 1);
+                leftSibling.childrenIds.RemoveAt(leftSibling.childrenIds.Count - 1);
             }
 
             nodeManager.MarkAsChanged(this);

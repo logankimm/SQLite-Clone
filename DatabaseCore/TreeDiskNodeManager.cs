@@ -78,7 +78,10 @@ public sealed class TreeDiskNodeManager<K, V> : ITreeNodeManager<K, V>
         {
             this.rootNode = Find(BufferHelper.ReadBufferUInt32(firstBlockData, 0));
         }
-        this.rootNode = CreateFirstRoot();
+        else
+        {
+            this.rootNode = CreateFirstRoot();
+        }
     }
 
     public TreeNode<K, V> Create(IEnumerable<Tuple<K, V>> entries, IEnumerable<uint> childrenIds)

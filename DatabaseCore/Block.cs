@@ -31,11 +31,9 @@ public class Block : IBlock
     public Block(BlockStorage storage, uint id, byte[] firstSector, Stream stream)
     {
         // Error handling for bad inputs
-        if (stream == null)
-            throw new ArgumentNullException("stream");
+        ArgumentNullException.ThrowIfNull(stream, nameof(stream));
 
-        if (firstSector == null)
-            throw new ArgumentNullException("firstSector");
+        ArgumentNullException.ThrowIfNull(firstSector, nameof(firstSector));
 
         if (firstSector.Length != storage.DiskSectorSize)
             throw new ArgumentException("firstSector length must be " + storage.DiskSectorSize);
@@ -95,7 +93,7 @@ public class Block : IBlock
         BufferHelper.WriteBuffer((long)value, firstSector, field * 8);
         isFirstSectorDirty = true;
     }
-    public void Read(byte[] dest, int dstOffset, int srcOffset, int count)
+    public void Read(byte[] dst, int dstOffset, int srcOffset, int count)
     {
         this.checkDisposed();
 
@@ -104,7 +102,7 @@ public class Block : IBlock
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }
-        if ((count + dstOffset) > dest.Length)
+        if ((count + dstOffset) > dst.Length)
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of dest bounds: Count=" + count);
         }
@@ -121,7 +119,7 @@ public class Block : IBlock
             Buffer.BlockCopy(
                 src: this.firstSector,
                 srcOffset: this.storage.BlockHeaderSize + srcOffset,
-                dst: dest,
+                dst: dst,
                 dstOffset: dstOffset,
                 count: numCacheBytesToRead
             );
@@ -147,7 +145,7 @@ public class Block : IBlock
         {
             var numBytesToRead = Math.Min(this.storage.DiskSectorSize, count - dataIndexRead);
             var thisRead = this.stream.Read(
-                buffer: dest,
+                buffer: dst,
                 offset: dstOffset + dataIndexRead,
                 count: numBytesToRead
             );
@@ -166,7 +164,7 @@ public class Block : IBlock
         this.checkDisposed();
 
         // make sure count and destination are still within bounds
-        if (srcOffset < 0 || srcOffset + count >= src.Length)
+        if (srcOffset < 0 || srcOffset + count > src.Length)
         {
             throw new ArgumentOutOfRangeException("Requested count is outside of src bounds: Count=" + count, "count");
         }

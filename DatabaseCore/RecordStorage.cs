@@ -52,7 +52,7 @@ public class RecordStorage : IRecordStorage
             {
                 return null;
             }
-            if (0L == block.GetHeader(kPreviousBlockId))
+            if (0L != block.GetHeader(kPreviousBlockId))
             {
                 return null;
             }
@@ -69,7 +69,7 @@ public class RecordStorage : IRecordStorage
 
             IBlock currBlock = block;
             // read data from the block
-            while (bytesRead < recordSize)
+            while (true)
             {
                 uint nextBlockId;
 
@@ -83,9 +83,9 @@ public class RecordStorage : IRecordStorage
 
                     // read this many blocks
                     currBlock.Read(
-                        dest: data,
+                        dst: data,
                         dstOffset: bytesRead,
-                        srcOffset: this.storage.BlockHeaderSize,
+                        srcOffset: 0,
                         count: (int)currBlockSize);
 
                     bytesRead += (int)currBlockSize;
@@ -105,7 +105,7 @@ public class RecordStorage : IRecordStorage
             }
 
             // data should always return at nextBlockId == 0. If it reaches here there is a critical error
-            throw new InvalidDataException("Block not found in RecordStorage and code is broken");
+            // throw new InvalidDataException("Block not found in RecordStorage and code is broken");
         }
     }
 
@@ -145,7 +145,7 @@ public class RecordStorage : IRecordStorage
             var dataToWrite = data.Length;
 
             // wouldn't this be the maximum (blockSize, dataToWrite)?
-            firstBlock.SetHeader(kBlockContentLength, dataToWrite);
+            firstBlock.SetHeader(kRecordLength, dataToWrite);
 
             // check if there is no data to be written
             if (dataToWrite == 0)
@@ -169,7 +169,7 @@ public class RecordStorage : IRecordStorage
                         dstOffset: 0,
                         count: writeLength
                     );
-                    currBlock.SetHeader(kBlockContentLength, writeLength);
+                    currBlock.SetHeader(kBlockContentLength, (long)writeLength);
                     dataWritten += writeLength;
 
                     // move to next block to continue reading
@@ -436,7 +436,7 @@ public class RecordStorage : IRecordStorage
             do
             {
                 var currBlock = this.storage.Find(currBlockId);
-                if (currBlockId == null)
+                if (currBlock == null)
                 {
                     if (currBlockId != 0)
                     {
@@ -520,7 +520,7 @@ public class RecordStorage : IRecordStorage
     {
         var contentLength = block.GetHeader(kBlockContentLength);
 
-        if (contentLength % 4 == 0)
+        if (contentLength % 4 != 0)
         {
             throw new DataMisalignedException("Block content length not %4: " + contentLength);
         }
@@ -553,7 +553,7 @@ public class RecordStorage : IRecordStorage
 
         // read the data from the bytes of the blockcontent - reading doesn't delete the content/pop/update it - just writes it to a buffer?
         block.Read(
-            dest: buffer,
+            dst: buffer,
             dstOffset: 0,
             srcOffset: (int)contentLength - 4,
             count: 4
@@ -581,10 +581,12 @@ public class RecordStorage : IRecordStorage
                 else
                 {
                     // change secondLastBlock to lastBlock
-                    targetBlock = AllocateBlock();
+                    targetBlock = this.storage.CreateNew();
+                    targetBlock.SetHeader(kPreviousBlockId, lastBlock.Id);
                     
                     lastBlock.SetHeader(kNextBlockId, targetBlock.Id);
-                    targetBlock.SetHeader(kPreviousBlockId, lastBlock.Id);
+
+                    recordLength = 0;
                 }
 
                 // add the blockId to the record keeper

@@ -59,7 +59,7 @@ public class Tree<K, V> : IIndex<K, V>
     /// </summary>
     public bool Delete(K key, V value, IComparer<V> valueComparer = null)
     {
-        if (allowDuplicateKeys == true)
+        if (allowDuplicateKeys == false)
         {
             throw new InvalidOperationException("This method should be called only from unique tree");
         }
@@ -74,7 +74,7 @@ public class Tree<K, V> : IIndex<K, V>
             while (shouldContinue)
             {
                 // recreate a new enumerator each time in case tree rebalances
-                using var enumerator = (TreeEnumerator<K, V>)LargerThanOrEqualTo(key).GetEnumerator();
+                using (var enumerator = (TreeEnumerator<K, V>)LargerThanOrEqualTo(key).GetEnumerator())
                 {
                     while (true)
                     {
@@ -126,13 +126,11 @@ public class Tree<K, V> : IIndex<K, V>
         }
 
         using var enumerator = (TreeEnumerator<K, V>)LargerThanOrEqualTo(key).GetEnumerator();
+        // MoveNext returns true if a match has been found
+        if (enumerator.MoveNext() && (nodeManager.KeyComparer.Compare(enumerator.Current.Item1, key) == 0))
         {
-            // MoveNext returns true if a match has been found
-            if (enumerator.MoveNext() && (nodeManager.KeyComparer.Compare(enumerator.Current.Item1, key) == 0))
-            {
-                enumerator.CurrentNode.Remove(enumerator.CurrentEntry);
-                return true;
-            }
+            enumerator.CurrentNode.Remove(enumerator.CurrentEntry);
+            return true;
         }
 
         return false;
@@ -180,7 +178,7 @@ public class Tree<K, V> : IIndex<K, V>
     public IEnumerable<Tuple<K, V>> LessThan(K key)
     {
         var startIterationIndex = 0;
-        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, false, ref startIterationIndex);
+        var node = this.FindNodeForIteration(key, this.nodeManager.RootNode, true, ref startIterationIndex);
 
         return new TreeTraverser<K, V> (
             nodeManager,
