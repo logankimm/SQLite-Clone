@@ -75,6 +75,26 @@ public class RecordStorageTest
     }
 
     [Test]
+    public void TestUpdateBlockToMuchBiggerSize()
+    {
+        var recordStorage = new RecordStorage(new BlockStorage(new MemoryStream(), 8192, 48));
+        var x1 = UnitTestHelper.RandomData(2491);
+        var x2 = UnitTestHelper.RandomData(9182);
+        var x3 = UnitTestHelper.RandomData(5182);
+        
+        recordStorage.Create(x1); // Use 1 block
+        recordStorage.Create(x2); // Use 2 blocks
+        recordStorage.Create(x3); // Use 1 block
+
+        var x2u = UnitTestHelper.RandomData(8192 * 11 + 19); // Use 12 block, so this record should be extended
+        recordStorage.Update(2, x2u);
+        
+        Assert.That(recordStorage.Find(1), Is.EqualTo(x1));
+        Assert.That(recordStorage.Find(2), Is.EqualTo(x2u));
+        Assert.That(recordStorage.Find(4), Is.EqualTo(x3));
+    }
+
+    [Test]
     public void TestCreateNewPersist()
     {
         var customData = new byte[4096 * 16 + 27];

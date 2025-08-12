@@ -74,6 +74,20 @@ public class BTreeTest
     }
 
     [Test]
+    public void SplitChildNodeTest ()
+    {
+        // Insert too much at root node that it overvlow
+        var tree = new Tree<int, string>(new TreeMemoryNodeManager<int, string>(2, Comparer<int>.Default));
+
+        for (var i = 0; i <= 100; i++)
+        {
+            tree.Insert(i, i.ToString());
+            var result = (from tuple in tree.LargerThanOrEqualTo(0) select tuple.Item1).ToList();
+            Assert.That(i + 1, Is.EqualTo(result.Count));
+        }
+    }
+
+    [Test]
     public void RandomTest()
     {
         var tree = new Tree<int, string>(new TreeMemoryNodeManager<int, string>(2, Comparer<int>.Default));
