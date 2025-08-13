@@ -9,6 +9,6 @@ public class ChampModel
     public byte[] UnitData { get; set; }
     public override string ToString()
     {
-        return string.Format("[ChampModel: Id={0}], Name={1}, Set={2}, Class={3}, UnitData={4}]", Id, Name, Class, Set, UnitData.Length + " bytes");
+        return string.Format("[ChampModel: Id={0}, Name={1}, Set={2}, Class={3}, UnitData={4}]", Id, Name, Set, Class, UnitData.Length + " bytes");
     }
 }

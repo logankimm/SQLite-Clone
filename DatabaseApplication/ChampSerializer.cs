@@ -19,6 +19,15 @@ public class ChampSerializer
             champ.UnitData.Length  // y bytes of DNA data
         ];
 
+        // guid
+        Buffer.BlockCopy (
+            src: champ.Id.ToByteArray(), 
+            srcOffset: 0, 
+            dst: champData,
+            dstOffset: 0, 
+            count: 16
+        );
+
         // Class
         Buffer.BlockCopy (
             src: LittleEndianByteOrder.GetBytes((int)classBytes.Length), 
@@ -87,36 +96,36 @@ public class ChampSerializer
         var champModel = new ChampModel();
 
         champModel.Id = BufferHelper.ReadBufferGuid(data, 0);
-
-        // name
-        var nameLength = BufferHelper.ReadBufferInt32(data, 16);
-        if (nameLength < 0 || nameLength > (16*1024))
-        {
-            throw new Exception ("Invalid string length: " + nameLength);
-        }
-        champModel.Name = System.Text.Encoding.UTF8.GetString(data, 16 + 4, nameLength);
-
-        // class
-        var classLength = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4);
-        if (classLength < 0 || classLength > (16*1024))
+        
+        var classLength = BufferHelper.ReadBufferInt32(data, 16);
+        if (classLength < 0 || classLength > (1024 * 16))
         {
             throw new Exception ("Invalid string length: " + classLength);
         }
-        champModel.Class = System.Text.Encoding.UTF8.GetString(data, 16 + 4 + nameLength + 4, classLength);
+        champModel.Class = System.Text.Encoding.UTF8.GetString(data, 16 + 4, classLength);
+
+
+        // name
+        var nameLength = BufferHelper.ReadBufferInt32(data, 16 + 4 + classLength);
+        if (nameLength < 0 || nameLength > (1024 * 16))
+        {
+            throw new Exception ("Invalid string length: " + nameLength);
+        }
+        champModel.Name = System.Text.Encoding.UTF8.GetString(data, 16 + 4 + classLength + 4, nameLength);
 
         // set
-        champModel.Set = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4 + classLength);
+        champModel.Set = BufferHelper.ReadBufferInt32(data, 16 + 4 + classLength + 4 + nameLength);
 
         // unit data
-        var unitDataLength = BufferHelper.ReadBufferInt32(data, 16 + 4 + nameLength + 4 + classLength + 4);
-        if (unitDataLength < 0 || unitDataLength > (16*1024))
+        var unitDataLength = BufferHelper.ReadBufferInt32(data, 16 + 4 + classLength + 4 + nameLength + 4);
+        if (unitDataLength < 0 || unitDataLength > (1024 * 16))
         {
             throw new Exception ("Invalid string length: " + unitDataLength);
         }
         champModel.UnitData = new byte[unitDataLength];
         Buffer.BlockCopy(
             src: data,
-            srcOffset: 16 + 4 + nameLength + 4 + classLength + 4 + 4,
+            srcOffset: 16 + 4 + classLength + 4 + nameLength + 4 + 4,
             dst: champModel.UnitData, dstOffset: 0,
             count: champModel.UnitData.Length);
 
