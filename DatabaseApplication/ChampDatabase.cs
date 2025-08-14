@@ -19,9 +19,9 @@ public class ChampDatabase : IDisposable
     {
         ArgumentNullException.ThrowIfNull(pathToChampDb);
 
-        this.mainDatabaseFile = new FileStream (pathToChampDb, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
-        this.primaryIndexFile = new FileStream (pathToChampDb + ".pidx", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
-        this.secondaryIndexFile = new FileStream (pathToChampDb + ".sidx", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
+        this.mainDatabaseFile = new FileStream(pathToChampDb, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
+        this.primaryIndexFile = new FileStream(pathToChampDb + ".pidx", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
+        this.secondaryIndexFile = new FileStream(pathToChampDb + ".sidx", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096);
 
         this.champRecords = new RecordStorage(new BlockStorage(this.mainDatabaseFile, blockSize: 4096, blockHeaderSize: 48));
 
